@@ -1,0 +1,109 @@
+import { ConsoleAuditSink } from "../core/audit.js";
+import { newId } from "../core/ids.js";
+import { InMemoryIdentityStore } from "../identity/in_memory_store.js";
+import { InMemoryEconomyLedger } from "../economy/in_memory_ledger.js";
+import { EscrowService } from "../economy/escrow.js";
+import { InMemoryTransitionStore } from "../core/transition/in_memory_transition_store.js";
+import { ShardTransitionFSM } from "../core/transition/fsm.js";
+
+import { createDefaultRegistry } from "../transitions/createDefaultRegistry.js";
+import { executeTransition } from "../transitions/executeTransition.js";
+import { InMemoryRequestIdempotencyStore } from "../transitions/requestIdempotencyStore.js";
+
+function assert(cond: unknown, msg: string) {
+  if (!cond) throw new Error(`ASSERT FAILED: ${msg}`);
+}
+
+async function main() {
+  const actor = "sim.idemp.instance";
+  const audit = new ConsoleAuditSink();
+
+  const identityStore = new InMemoryIdentityStore();
+  const ledger = new InMemoryEconomyLedger();
+  const escrow = new EscrowService(ledger);
+  const transitions = new InMemoryTransitionStore();
+  const fsm = new ShardTransitionFSM({ transitions, escrow, audit });
+
+  const ctx = { fsm, identityStore, ledger, actor };
+  const registry = createDefaultRegistry(ctx);
+  const idemp = new InMemoryRequestIdempotencyStore();
+
+  const pid = newId("pid", 16);
+  await identityStore.put({
+    schema_version: "1.0.0",
+    identity_id: pid,
+    created_at: new Date().toISOString(),
+    status: "active",
+    auth: { provider: "internal", subject: `user:${pid}`, last_authenticated_at: new Date().toISOString() },
+    profile: { display_name: "IdempRunner" },
+    scopes: ["world.travel", "assets.transfer"],
+    entitlements: [],
+    audit: { created_by: actor, change_log_ref: "memory://audit" }
+  });
+
+  const aid = newId("aid", 16);
+  ledger.seed({
+    schema_version: "1.0.0",
+    asset_id: aid,
+    asset_class: "item",
+    asset_type: "gate_key",
+    scope: "global",
+    owner: { owner_type: "player", owner_id: pid },
+    state: { status: "active", quantity: 1, attributes: { label: "Key" } },
+    lifecycle: { created_at: new Date().toISOString(), origin: { origin_type: "grant", origin_ref: "seed" } },
+    transfer_policy: { transferable: true, transfer_scope: "global", requires_escrow: true },
+    integrity: { idempotency_key: newId("tx", 12), version: 1 },
+    audit: { change_log_ref: "memory://audit", last_change_id: "seed" }
+  });
+
+  const request = {
+    kind: "instance_gate" as const,
+    identity_id: pid,
+    from_shard: "sid_world",
+    to_shard: "sid_instance_001",
+    protected_assets: [aid],
+    metadata: { gate_id: "gate://alpha" }
+  };
+
+  const request_id = "req_instance_alpha_001";
+  const first = await executeTransition(ctx, registry, idemp, {
+    action: "begin",
+    request_id,
+    change_id: "chg_begin_1",
+    request,
+    ttl_ms: 5_000, // short TTL for demo
+    options: { sweep: { enabled: true, max_to_remove: 1000 } }
+  });
+
+  assert(first.transition?.transition_id, "First begin should return transition_id.");
+  const tid1 = first.transition!.transition_id;
+
+  const after1 = await ledger.get(aid);
+  assert(after1?.state.status === "escrow", "After begin, asset should be escrowed.");
+
+  const second = await executeTransition(ctx, registry, idemp, {
+    action: "begin",
+    request_id,
+    change_id: "chg_begin_2",
+    request
+  });
+
+  const tid2 = second.transition!.transition_id;
+  assert(tid1 === tid2, "Retry must return the same transition_id.");
+  const stats = idemp.stats();
+  console.log("Idempotency stats:", stats);
+
+  console.log("✅ request_id idempotency verified (instance)");
+
+  // TTL expiration demo: advance time by manual sweep
+  await (idemp as any).sweep(Date.now() + 10_000, 10_000);
+  const afterExpire = await idemp.get("instance_gate", request_id);
+  assert(afterExpire === undefined, "After TTL, idempotency binding should expire.");
+
+  console.log("✅ TTL expiration + sweep verified");
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
