@@ -19,8 +19,9 @@ export type ExecuteAction = "begin" | "confirm" | "rollback";
 
 export interface ExecuteBeginInput {
   action: "begin";
+  request_id: string;        // NEW: client-stable idempotency key
   request: TransitionRequest;
-  change_id: string; // idempotency token for the begin operation at the API boundary
+  change_id: string;         // server-side change id
   options?: ExecuteOptions;
 }
 
