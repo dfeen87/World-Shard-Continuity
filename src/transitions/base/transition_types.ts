@@ -15,9 +15,14 @@ export interface TransitionRequest {
 
 export interface TransitionOutcome {
   success: boolean;
-  applied_assets?: string[];
-  consumed_assets?: string[];
-  currency_delta?: number;
   flags?: string[];
   failure_reason?: string;
+
+  // Optional convenience: controller may return transition_id explicitly
+  transition_id?: string;
+
+  // Optional: for match/instance resolution (not required at begin)
+  granted_assets?: string[];
+  consumed_assets?: string[];
+  currency_delta?: number;
 }
