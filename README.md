@@ -158,6 +158,19 @@ Including those concerns would:
 
 This repo is designed to age well.
 
+## Related Contracts
+
+This repository includes formal contracts that define system-level guarantees
+beyond individual transition patterns.
+
+- **World Transition Contract**  
+  (`contracts/world-transition.contract.md`)  
+  Defines authoritative rules for identity, asset, and economy continuity across
+  distinct worlds and authority domains.
+
+These contracts are normative and intended to guide implementation,
+verification, and long-term evolution.
+
 ## Who This Is For
 
 * Backend / platform engineers
