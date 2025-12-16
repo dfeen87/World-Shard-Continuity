@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0.0",
+  "identity_id": "pid_AbCdEfGhIjKlMnOpQrSt",
+  "created_at": "2025-12-15T23:15:00.000Z",
+  "updated_at": "2025-12-15T23:20:00.000Z",
+  "status": "active",
+  "auth": {
+    "provider": "internal",
+    "issuer": "auth.world-shard-continuity.local",
+    "subject": "user:demo",
+    "mfa_enabled": false,
+    "last_authenticated_at": "2025-12-15T23:19:30.000Z",
+    "session_constraints": {
+      "max_concurrent_sessions": 3,
+      "session_ttl_seconds": 86400
+    }
+  },
+  "profile": {
+    "display_name": "TestPilot",
+    "avatar_ref": "hash://avatar/demo_v1",
+    "region": "US-NE",
+    "locale": "en-US",
+    "privacy": {
+      "visibility": "friends",
+      "allow_discovery": true,
+      "allow_cross_world_presence": true
+    }
+  },
+  "scopes": [
+    "world.travel",
+    "identity.read",
+    "assets.read",
+    "assets.transfer",
+    "economy.read"
+  ],
+  "entitlements": [
+    {
+      "entitlement_id": "ent_DemoAccess001",
+      "type": "access",
+      "scope": "global",
+      "granted_at": "2025-12-15T23:15:00.000Z",
+      "metadata": {
+        "note": "Sample entitlement for fixture validation."
+      }
+    }
+  ],
+  "reputation": {
+    "trust_score": 0.85,
+    "risk_flags": [],
+    "last_reviewed_at": "2025-12-15T23:18:00.000Z"
+  },
+  "social": {
+    "friends": [
+      "pid_QwErTyUiOpAsDfGhJkLm"
+    ],
+    "groups": [
+      "gid_DemoGuild001"
+    ]
+  },
+  "audit": {
+    "created_by": "fixture.generator",
+    "change_log_ref": "memory://audit/identity",
+    "last_change_id": "chg_identity_seed_001",
+    "integrity": {
+      "hash_alg": "sha256",
+      "content_hash": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+    }
+  }
+}
