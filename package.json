@@ -8,21 +8,37 @@
   "files": [
     "dist",
     "schemas",
-    "examples"
+    "examples",
+    "reference-architectures"
   ],
   "scripts": {
+    /* -------------------- Core hygiene -------------------- */
     "clean": "rm -rf dist",
-
     "typecheck": "tsc -p tsconfig.json --noEmit",
-
     "build": "npm run clean && tsc -p tsconfig.json",
 
+    /* -------------------- Core validation -------------------- */
     "validate": "node dist/cli/validate.js",
     "dev:validate": "ts-node src/cli/validate.ts",
-
     "fixtures:validate": "node dist/examples/validate_fixtures.js",
 
-    "ci": "npm run typecheck && npm run build && npm run fixtures:validate"
+    /* -------------------- Simulations (reference behavior) -------------------- */
+    "sim:instance": "node dist/examples/simulate_instance_gate_transition.js",
+    "sim:mm": "node dist/examples/simulate_matchmaking_transition.js",
+
+    /* -------------------- Idempotency simulations (v1.1-grade) -------------------- */
+    "sim:idemp:instance": "node dist/examples/simulate_request_idempotency_instance.js",
+    "sim:idemp:mm": "node dist/examples/simulate_request_idempotency_matchmaking.js",
+    "sim:idemp": "npm run sim:idemp:instance && npm run sim:idemp:mm",
+
+    /* -------------------- Reviewer fast-path -------------------- */
+    "sim:quick": "npm run sim:idemp",
+
+    /* -------------------- Full confidence run -------------------- */
+    "sim:all": "npm run sim:instance && npm run sim:mm && npm run sim:idemp",
+
+    /* -------------------- CI entrypoint -------------------- */
+    "ci": "npm run typecheck && npm run build && npm run fixtures:validate && npm run sim:all"
   },
   "dependencies": {
     "ajv": "^8.17.1",
