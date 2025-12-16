@@ -1,103 +1,209 @@
-import { AuditSink, auditNow } from "../audit.js";
-import { TransitionError } from "../errors.js";
-import { newId } from "../ids.js";
-import { nowIso } from "../time.js";
-import { EscrowService } from "../../economy/escrow.js";
-import { TransitionStore } from "./in_memory_transition_store.js";
-import { ShardTransition } from "./types.js";
+import type { AuditSink } from "../audit.js";
+import type { TransitionStore } from "./transition_store.js";
+import type { ShardTransition } from "./types.js";
+import type { EscrowService } from "../../economy/escrow.js";
+import { ConflictError, ValidationError } from "../errors.js";
 
-export interface TransitionDeps {
-  transitions: TransitionStore;
-  escrow: EscrowService;
-  audit: AuditSink;
-}
-
+/**
+ * ShardTransitionFSM
+ *
+ * Authoritative finite-state machine governing shard transitions.
+ * Owns lifecycle:
+ *   PREPARED -> COMMITTED -> CONFIRMED | ROLLED_BACK
+ *
+ * This class is intentionally strict:
+ * - All state changes are audited
+ * - All economy movement flows through escrow
+ * - Idempotency is enforced at the FSM boundary
+ */
 export class ShardTransitionFSM {
-  constructor(private deps: TransitionDeps) {}
+  private readonly deps: {
+    transitions: TransitionStore;
+    escrow: EscrowService;
+    audit: AuditSink;
+  };
 
-  async prepare(actor: string, identityId: string, fromShard: string, toShard: string, protectedAssets: string[], changeId: string): Promise<ShardTransition> {
+  constructor(deps: {
+    transitions: TransitionStore;
+    escrow: EscrowService;
+    audit: AuditSink;
+  }) {
+    this.deps = deps;
+  }
+
+  /**
+   * Expose transition store in a controlled, read-only way.
+   * Used by orchestration layers (e.g. executeTransition).
+   *
+   * NOTE:
+   * - Do not mutate transitions directly from callers
+   * - All lifecycle changes must go through FSM methods
+   */
+  getStore(): TransitionStore {
+    return this.deps.transitions;
+  }
+
+  /**
+   * Prepare a new transition.
+   * - Creates transition record
+   * - Escrows protected assets
+   * - Does NOT finalize state
+   */
+  async prepare(
+    actor: string,
+    identity_id: string,
+    from_shard: string,
+    to_shard: string,
+    protected_assets: string[],
+    change_id: string
+  ): Promise<ShardTransition> {
+    if (!identity_id) throw new ValidationError("identity_id required.");
+    if (!from_shard || !to_shard) throw new ValidationError("from_shard and to_shard required.");
+    if (!change_id) throw new ValidationError("change_id required.");
+
+    const existing = await this.deps.transitions.findByChangeId(change_id);
+    if (existing) return existing;
+
     const transition: ShardTransition = {
-      transition_id: newId("tx", 16),
-      identity_id: identityId,
-      from_shard: fromShard,
-      to_shard: toShard,
-      started_at: nowIso(),
+      transition_id: this.deps.transitions.generateId(),
+      identity_id,
+      from_shard,
+      to_shard,
+      protected_assets,
       status: "prepared",
-      protected_assets: protectedAssets,
-      change_id_prepare: changeId
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
-    // escrow protected assets (idempotency handled at ledger level)
-    for (const aid of protectedAssets) {
-      await this.deps.escrow.holdAsset(aid, identityId, `${changeId}:escrow:${aid}`);
-      this.deps.audit.emit(auditNow({ type: "asset.escrowed", actor, asset_id: aid, escrow_id: "held" }));
-    }
-
+    await this.deps.escrow.lock(identity_id, protected_assets, transition.transition_id);
     await this.deps.transitions.put(transition);
-    this.deps.audit.emit(auditNow({ type: "transition.started", actor, transition_id: transition.transition_id, from: fromShard, to: toShard }));
+
+    await this.deps.audit.record({
+      type: "transition.prepared",
+      actor,
+      transition_id: transition.transition_id,
+      identity_id,
+      metadata: { from_shard, to_shard }
+    });
+
     return transition;
   }
 
-  async commit(actor: string, transitionId: string, changeId: string): Promise<ShardTransition> {
-    const cur = await this.deps.transitions.get(transitionId);
-    if (!cur) throw new TransitionError("Transition not found.", { transition_id: transitionId });
+  /**
+   * Commit a prepared transition.
+   * - Confirms entry into target shard or authority
+   * - Still reversible
+   */
+  async commit(
+    actor: string,
+    transition_id: string,
+    change_id: string
+  ): Promise<ShardTransition> {
+    const transition = await this.requireTransition(transition_id);
 
-    if (cur.status === "committed" || cur.status === "confirmed") return cur;
-    if (cur.status !== "prepared") throw new TransitionError("Invalid transition state for commit.", { status: cur.status });
-
-    // In a real system: serialize state, validate destination readiness, reserve capacity, etc.
-
-    const next = await this.deps.transitions.update(transitionId, (t) => ({
-      ...t,
-      status: "committed",
-      change_id_commit: changeId
-    }));
-
-    this.deps.audit.emit(auditNow({ type: "transition.committed", actor, transition_id: transitionId }));
-    return next;
-  }
-
-  async confirm(actor: string, transitionId: string, changeId: string): Promise<ShardTransition> {
-    const cur = await this.deps.transitions.get(transitionId);
-    if (!cur) throw new TransitionError("Transition not found.", { transition_id: transitionId });
-
-    if (cur.status === "confirmed") return cur;
-    if (cur.status !== "committed") throw new TransitionError("Invalid transition state for confirm.", { status: cur.status });
-
-    // Release escrow now that destination is authoritative
-    for (const aid of cur.protected_assets) {
-      await this.deps.escrow.releaseAsset(aid, `${changeId}:release:${aid}`);
-      this.deps.audit.emit(auditNow({ type: "asset.released", actor, asset_id: aid, escrow_id: "released" }));
+    if (transition.status !== "prepared") {
+      throw new ConflictError(`Cannot commit transition in state: ${transition.status}`);
     }
 
-    const next = await this.deps.transitions.update(transitionId, (t) => ({
-      ...t,
-      status: "confirmed",
-      change_id_confirm: changeId
-    }));
+    const existing = await this.deps.transitions.findByChangeId(change_id);
+    if (existing) return existing;
 
-    this.deps.audit.emit(auditNow({ type: "transition.confirmed", actor, transition_id: transitionId }));
-    return next;
+    transition.status = "committed";
+    transition.updated_at = new Date().toISOString();
+
+    await this.deps.transitions.put(transition);
+
+    await this.deps.audit.record({
+      type: "transition.committed",
+      actor,
+      transition_id,
+      identity_id: transition.identity_id
+    });
+
+    return transition;
   }
 
-  async rollback(actor: string, transitionId: string, changeId: string, reason: string): Promise<ShardTransition> {
-    const cur = await this.deps.transitions.get(transitionId);
-    if (!cur) throw new TransitionError("Transition not found.", { transition_id: transitionId });
+  /**
+   * Confirm a committed transition.
+   * - Releases escrow
+   * - Makes destination authoritative
+   * - Irreversible
+   */
+  async confirm(
+    actor: string,
+    transition_id: string,
+    change_id: string
+  ): Promise<ShardTransition> {
+    const transition = await this.requireTransition(transition_id);
 
-    if (cur.status === "rolled_back") return cur;
-    if (cur.status === "confirmed") throw new TransitionError("Cannot rollback a confirmed transition.", { transition_id: transitionId });
-
-    for (const aid of cur.protected_assets) {
-      await this.deps.escrow.rollbackAsset(aid, `${changeId}:rb:${aid}`, reason);
+    if (transition.status !== "committed") {
+      throw new ConflictError(`Cannot confirm transition in state: ${transition.status}`);
     }
 
-    const next = await this.deps.transitions.update(transitionId, (t) => ({
-      ...t,
-      status: "rolled_back",
-      failure_reason: reason
-    }));
+    const existing = await this.deps.transitions.findByChangeId(change_id);
+    if (existing) return existing;
 
-    this.deps.audit.emit(auditNow({ type: "transition.rolled_back", actor, transition_id: transitionId, reason }));
-    return next;
+    await this.deps.escrow.release(transition.identity_id, transition.transition_id);
+
+    transition.status = "confirmed";
+    transition.updated_at = new Date().toISOString();
+
+    await this.deps.transitions.put(transition);
+
+    await this.deps.audit.record({
+      type: "transition.confirmed",
+      actor,
+      transition_id,
+      identity_id: transition.identity_id
+    });
+
+    return transition;
+  }
+
+  /**
+   * Roll back a prepared or committed transition.
+   * - Restores assets
+   * - Returns authority to source shard
+   */
+  async rollback(
+    actor: string,
+    transition_id: string,
+    change_id: string,
+    reason: string
+  ): Promise<ShardTransition> {
+    const transition = await this.requireTransition(transition_id);
+
+    if (transition.status === "confirmed") {
+      throw new ConflictError("Confirmed transitions cannot be rolled back.");
+    }
+
+    const existing = await this.deps.transitions.findByChangeId(change_id);
+    if (existing) return existing;
+
+    await this.deps.escrow.release(transition.identity_id, transition.transition_id);
+
+    transition.status = "rolled_back";
+    transition.updated_at = new Date().toISOString();
+
+    await this.deps.transitions.put(transition);
+
+    await this.deps.audit.record({
+      type: "transition.rolled_back",
+      actor,
+      transition_id,
+      identity_id: transition.identity_id,
+      metadata: { reason }
+    });
+
+    return transition;
+  }
+
+  /**
+   * Internal helper to enforce existence.
+   */
+  private async requireTransition(transition_id: string): Promise<ShardTransition> {
+    const t = await this.deps.transitions.get(transition_id);
+    if (!t) throw new ConflictError(`Transition not found: ${transition_id}`);
+    return t;
   }
 }
