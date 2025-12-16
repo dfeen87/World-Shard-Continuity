@@ -1,1 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/world-shard-continuity/schemas/world-shard.schema.json",
+  "title": "WorldShardDescriptor",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "world",
+    "shard",
+    "runtime",
+    "transition",
+    "capabilities",
+    "health",
+    "audit"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^1\\.0\\.0$" },
+
+    "world": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["world_id", "name", "version"],
+      "properties": {
+        "world_id": { "type": "string", "pattern": "^wid_[A-Za-z0-9_-]{8,64}$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Semantic version of the world content/build."
+        },
+        "content_hash": { "type": "string", "maxLength": 128 },
+        "canonical_region": { "type": "string", "maxLength": 64 }
+      }
+    },
+
+    "shard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shard_id", "region", "shard_type", "status"],
+      "properties": {
+        "shard_id": { "type": "string", "pattern": "^sid_[A-Za-z0-9_-]{8,64}$" },
+        "region": { "type": "string", "maxLength": 64, "description": "Operational region tag (e.g., us-east, eu-west)." },
+        "shard_type": { "type": "string", "enum": ["public", "private", "match", "instance", "test", "dev"] },
+        "status": { "type": "string", "enum": ["online", "degraded", "draining", "offline", "maintenance"] },
+        "max_players": { "type": "integer", "minimum": 1, "maximum": 1000000 },
+        "current_players": { "type": "integer", "minimum": 0, "maximum": 1000000 }
+      }
+    },
+
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engine_family", "protocol_version"],
+      "properties": {
+        "engine_family": {
+          "type": "string",
+          "enum": ["unreal", "unity", "custom", "source", "other"],
+          "description": "High-level engine family label (not required to be exact)."
+        },
+        "engine_version": { "type": "string", "maxLength": 64 },
+        "protocol_version": { "type": "string", "maxLength": 32, "description": "Network/protocol compatibility version." },
+        "build_id": { "type": "string", "maxLength": 128 }
+      }
+    },
+
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["supported_modes", "handoff_semantics"],
+      "properties": {
+        "supported_modes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["diegetic", "menu", "automatic", "admin_migration"] }
+        },
+        "handoff_semantics": {
+          "type": "string",
+          "enum": ["staged_handoff", "hard_cutover", "soft_handoff"],
+          "description": "Expected transition semantics for this shard."
+        },
+        "requires_readiness_check": { "type": "boolean", "default": true },
+        "entry_points": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/EntryPoint" }
+        }
+      }
+    },
+
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "identity_required": { "type": "boolean", "default": true },
+        "supports_global_assets": { "type": "boolean", "default": false },
+        "supports_world_local_assets": { "type": "boolean", "default": true },
+        "supports_voice": { "type": "boolean" },
+        "supports_trading": { "type": "boolean" },
+        "supports_cross_world_party": { "type": "boolean" },
+        "economy_mode": { "type": "string", "enum": ["none", "local_only", "hybrid", "global_authoritative"] }
+      }
+    },
+
+    "health": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["last_heartbeat_at"],
+      "properties": {
+        "last_heartbeat_at": { "type": "string", "format": "date-time" },
+        "latency_ms_p50": { "type": "number", "minimum": 0 },
+        "latency_ms_p95": { "type": "number", "minimum": 0 },
+        "error_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "notes": { "type": "string", "maxLength": 256 }
+      }
+    },
+
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["change_log_ref", "last_change_id"],
+      "properties": {
+        "change_log_ref": { "type": "string", "maxLength": 512 },
+        "last_change_id": { "type": "string", "maxLength": 128 },
+        "last_changed_at": { "type": "string", "format": "date-time" },
+        "last_changed_by": { "type": "string", "maxLength": 128 }
+      }
+    }
+  },
+
+  "$defs": {
+    "EntryPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "ref"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["terminal", "gate", "vehicle", "elevator", "portal", "menu"]
+        },
+        "ref": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Implementation reference (map marker, GUID, scene node, etc.)."
+        },
+        "description": { "type": "string", "maxLength": 256 }
+      }
+    }
+  }
+}
 
