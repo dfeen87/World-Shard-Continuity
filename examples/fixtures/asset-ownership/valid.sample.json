@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0.0",
+  "asset_id": "aid_ZxCvBnMmAsDfGhJkLqWeRtY",
+  "asset_class": "item",
+  "asset_type": "demo_item",
+  "scope": "global",
+  "owner": {
+    "owner_type": "player",
+    "owner_id": "pid_AbCdEfGhIjKlMnOpQrSt"
+  },
+  "state": {
+    "status": "active",
+    "quantity": 1,
+    "durability": 1,
+    "attributes": {
+      "rarity": "common",
+      "label": "AirportCase",
+      "cosmetic_variant": "standard"
+    }
+  },
+  "lifecycle": {
+    "created_at": "2025-12-15T23:15:00.000Z",
+    "updated_at": "2025-12-15T23:20:00.000Z",
+    "origin": {
+      "origin_type": "grant",
+      "origin_ref": "fixture.seed",
+      "origin_world_ref": "wid_DemoWorld001"
+    }
+  },
+  "transfer_policy": {
+    "transferable": true,
+    "transfer_scope": "global",
+    "cooldown_seconds": 0,
+    "requires_escrow": true,
+    "restrictions": [
+      {
+        "type": "reputation_floor",
+        "min_trust_score": 0.2
+      }
+    ]
+  },
+  "integrity": {
+    "idempotency_key": "tx_SeedIdempotencyKey001",
+    "hash_alg": "sha256",
+    "content_hash": "beadbeadbeadbeadbeadbeadbeadbeadbeadbeadbeadbeadbeadbeadbeadbead",
+    "version": 1
+  },
+  "audit": {
+    "change_log_ref": "memory://audit/economy",
+    "last_change_id": "chg_asset_seed_001",
+    "last_changed_at": "2025-12-15T23:20:00.000Z",
+    "last_changed_by": "fixture.generator"
+  }
+}
