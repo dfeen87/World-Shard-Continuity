@@ -160,16 +160,21 @@ This repo is designed to age well.
 
 ## Related Contracts
 
-This repository includes formal contracts that define system-level guarantees
-beyond individual transition patterns.
+This repository includes formal contracts and guidance documents that define
+system-level guarantees beyond individual transition patterns.
 
 - **World Transition Contract**  
   (`contracts/world-transition.contract.md`)  
   Defines authoritative rules for identity, asset, and economy continuity across
   distinct worlds and authority domains.
 
-These contracts are normative and intended to guide implementation,
-verification, and long-term evolution.
+- **Narrative Timeline Layering**  
+  (`docs/narrative-timeline-layering.md`)  
+  Describes how narrative state can be layered on top of shard and world continuity
+  without violating authority boundaries or persistence guarantees.
+
+These documents are normative and intended to guide implementation,
+verification, and long-term evolution of continuity-safe systems.
 
 ## Who This Is For
 
