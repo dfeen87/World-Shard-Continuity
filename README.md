@@ -168,6 +168,11 @@ system-level guarantees beyond individual transition patterns.
   Defines authoritative rules for identity, asset, and economy continuity across
   distinct worlds and authority domains.
 
+- **Economy Persistence Contract**  
+  (`contracts/economy-persistence.contract.md`)  
+  Defines durability, escrow, settlement, and idempotency guarantees required to
+  preserve economic integrity across shard, instance, and world transitions.
+
 - **Narrative Timeline Layering**  
   (`docs/narrative-timeline-layering.md`)  
   Describes how narrative state can be layered on top of shard and world continuity
