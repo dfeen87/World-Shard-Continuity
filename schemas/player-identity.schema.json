@@ -1,1 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/world-shard-continuity/schemas/player-identity.schema.json",
+  "title": "PlayerIdentity",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "identity_id",
+    "created_at",
+    "status",
+    "auth",
+    "profile",
+    "entitlements",
+    "scopes",
+    "audit"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^1\\.0\\.0$",
+      "description": "Schema version for forward/backward compatibility."
+    },
+    "identity_id": {
+      "type": "string",
+      "pattern": "^pid_[A-Za-z0-9_-]{16,64}$",
+      "description": "Globally unique, immutable player identity ID."
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+
+    "status": {
+      "type": "string",
+      "enum": ["active", "suspended", "banned", "deleted"],
+      "description": "Operational status of the identity."
+    },
+
+    "auth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "subject", "last_authenticated_at"],
+      "properties": {
+        "provider": {
+          "type": "string",
+          "enum": ["internal", "oauth", "platform", "sso"],
+          "description": "Authentication provider category."
+        },
+        "issuer": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Optional issuer identifier (e.g., auth domain, platform issuer)."
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 256,
+          "description": "Provider subject identifier. Must be stable for the provider."
+        },
+        "mfa_enabled": { "type": "boolean" },
+        "last_authenticated_at": { "type": "string", "format": "date-time" },
+        "session_constraints": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max_concurrent_sessions": { "type": "integer", "minimum": 1, "maximum": 50 },
+            "session_ttl_seconds": { "type": "integer", "minimum": 60, "maximum": 1209600 }
+          }
+        }
+      }
+    },
+
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["display_name"],
+      "properties": {
+        "display_name": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "avatar_ref": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Reference to avatar asset (URL, content hash, internal ref)."
+        },
+        "region": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}(-[A-Z0-9]{1,3})?$",
+          "description": "Optional region hint (e.g., US, US-NE). Not authoritative geo."
+        },
+        "locale": {
+          "type": "string",
+          "pattern": "^[a-z]{2,3}(-[A-Z]{2})?$",
+          "description": "IETF-ish locale tag (e.g., en, en-US)."
+        },
+        "privacy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "visibility": { "type": "string", "enum": ["public", "friends", "private"] },
+            "allow_discovery": { "type": "boolean" },
+            "allow_cross_world_presence": { "type": "boolean" }
+          }
+        }
+      }
+    },
+
+    "scopes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(\\.[a-z0-9]+)*$"
+      },
+      "description": "Authorization scopes granted to the identity."
+    },
+
+    "entitlements": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Entitlement" },
+      "description": "Durable unlocks, licenses, and access grants."
+    },
+
+    "reputation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "trust_score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "risk_flags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "maxLength": 64 }
+        },
+        "last_reviewed_at": { "type": "string", "format": "date-time" }
+      }
+    },
+
+    "social": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "friends": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^pid_[A-Za-z0-9_-]{16,64}$" }
+        },
+        "groups": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^gid_[A-Za-z0-9_-]{8,64}$" }
+        }
+      },
+      "description": "Optional social references. May be stored separately in production."
+    },
+
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["created_by", "change_log_ref"],
+      "properties": {
+        "created_by": { "type": "string", "maxLength": 128 },
+        "change_log_ref": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Reference to audit log stream / table / topic."
+        },
+        "last_change_id": { "type": "string", "maxLength": 128 },
+        "integrity": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "hash_alg": { "type": "string", "enum": ["none", "sha256", "sha512"] },
+            "content_hash": { "type": "string", "maxLength": 128 }
+          }
+        }
+      }
+    }
+  },
+
+  "$defs": {
+    "Entitlement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entitlement_id", "type", "granted_at"],
+      "properties": {
+        "entitlement_id": {
+          "type": "string",
+          "pattern": "^ent_[A-Za-z0-9_-]{8,64}$"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["access", "license", "cosmetic", "feature", "subscription"]
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["global", "world", "shard"],
+          "description": "Where this entitlement applies."
+        },
+        "target_ref": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Optional reference to world/shard/content the entitlement targets."
+        },
+        "expires_at": { "type": "string", "format": "date-time" },
+        "granted_at": { "type": "string", "format": "date-time" },
+        "metadata": {
+          "type": "object",
+          "description": "Implementation-defined metadata (kept flexible)."
+        }
+      }
+    }
+  }
+}
 
