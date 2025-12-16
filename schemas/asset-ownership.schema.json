@@ -1,1 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/world-shard-continuity/schemas/asset-ownership.schema.json",
+  "title": "AssetOwnershipRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "asset_id",
+    "asset_class",
+    "scope",
+    "owner",
+    "state",
+    "lifecycle",
+    "transfer_policy",
+    "integrity",
+    "audit"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^1\\.0\\.0$"
+    },
+
+    "asset_id": {
+      "type": "string",
+      "pattern": "^aid_[A-Za-z0-9_-]{16,80}$",
+      "description": "Globally unique asset identifier."
+    },
+
+    "asset_class": {
+      "type": "string",
+      "enum": ["currency", "item", "vehicle", "property", "entitlement", "reputation", "other"],
+      "description": "High-level asset classification."
+    },
+
+    "asset_type": {
+      "type": "string",
+      "maxLength": 128,
+      "description": "Implementation-defined subtype (e.g., 'sedan', 'legendary_sword')."
+    },
+
+    "scope": {
+      "type": "string",
+      "enum": ["global", "world_local", "shard_local"],
+      "description": "Where this asset is valid and persists."
+    },
+
+    "world_ref": {
+      "type": "string",
+      "pattern": "^wid_[A-Za-z0-9_-]{8,64}$",
+      "description": "Required when scope is world_local or shard_local."
+    },
+
+    "shard_ref": {
+      "type": "string",
+      "pattern": "^sid_[A-Za-z0-9_-]{8,64}$",
+      "description": "Required when scope is shard_local."
+    },
+
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner_type", "owner_id"],
+      "properties": {
+        "owner_type": { "type": "string", "enum": ["player", "system", "world", "guild"] },
+        "owner_id": {
+          "type": "string",
+          "description": "For players, use pid_*; for others, use implementation-defined IDs.",
+          "minLength": 6,
+          "maxLength": 128
+        }
+      }
+    },
+
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["active", "locked", "escrow", "consumed", "destroyed", "suspended"]
+        },
+        "quantity": {
+          "type": "number",
+          "minimum": 0,
+          "description": "For fungible assets. For non-fungible assets, omit or set to 1."
+        },
+        "durability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Optional normalized durability/condition."
+        },
+        "attributes": {
+          "type": "object",
+          "description": "Flexible asset attributes (rarity, modifiers, cosmetics, etc.)."
+        }
+      }
+    },
+
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["created_at", "origin"],
+      "properties": {
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "origin": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["origin_type"],
+          "properties": {
+            "origin_type": { "type": "string", "enum": ["mint", "reward", "purchase", "drop", "grant", "migration"] },
+            "origin_ref": { "type": "string", "maxLength": 256 },
+            "origin_world_ref": { "type": "string", "pattern": "^wid_[A-Za-z0-9_-]{8,64}$" }
+          }
+        }
+      }
+    },
+
+    "transfer_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["transferable"],
+      "properties": {
+        "transferable": { "type": "boolean" },
+        "transfer_scope": {
+          "type": "string",
+          "enum": ["none", "world_only", "shard_only", "global"],
+          "description": "Where transfers are permitted."
+        },
+        "cooldown_seconds": { "type": "integer", "minimum": 0, "maximum": 31536000 },
+        "requires_escrow": { "type": "boolean" },
+        "restrictions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Restriction" }
+        }
+      }
+    },
+
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["idempotency_key"],
+      "properties": {
+        "idempotency_key": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Used to prevent duplication across retries."
+        },
+        "hash_alg": { "type": "string", "enum": ["none", "sha256", "sha512"] },
+        "content_hash": { "type": "string", "maxLength": 128 },
+        "version": { "type": "integer", "minimum": 1 }
+      }
+    },
+
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["change_log_ref", "last_change_id"],
+      "properties": {
+        "change_log_ref": { "type": "string", "maxLength": 512 },
+        "last_change_id": { "type": "string", "maxLength": 128 },
+        "last_changed_at": { "type": "string", "format": "date-time" },
+        "last_changed_by": { "type": "string", "maxLength": 128 }
+      }
+    }
+  },
+
+  "allOf": [
+    {
+      "if": { "properties": { "scope": { "const": "world_local" } }, "required": ["scope"] },
+      "then": { "required": ["world_ref"] }
+    },
+    {
+      "if": { "properties": { "scope": { "const": "shard_local" } }, "required": ["scope"] },
+      "then": { "required": ["world_ref", "shard_ref"] }
+    }
+  ],
+
+  "$defs": {
+    "Restriction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["world_allowlist", "world_denylist", "time_window", "account_age", "reputation_floor"]
+        },
+        "world_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^wid_[A-Za-z0-9_-]{8,64}$" },
+          "uniqueItems": true
+        },
+        "start_at": { "type": "string", "format": "date-time" },
+        "end_at": { "type": "string", "format": "date-time" },
+        "min_account_age_days": { "type": "integer", "minimum": 0, "maximum": 36500 },
+        "min_trust_score": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}
 
