@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0.0",
+  "world": {
+    "world_id": "wid_DemoWorld001",
+    "name": "DemoWorld",
+    "version": "1.0.0",
+    "content_hash": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "canonical_region": "us-east"
+  },
+  "shard": {
+    "shard_id": "sid_DemoShard001",
+    "region": "us-east",
+    "shard_type": "public",
+    "status": "online",
+    "max_players": 2000,
+    "current_players": 124
+  },
+  "runtime": {
+    "engine_family": "custom",
+    "engine_version": "RUNTIME-1.0",
+    "protocol_version": "proto-1",
+    "build_id": "build_2025_12_15_demo"
+  },
+  "transition": {
+    "supported_modes": [
+      "diegetic",
+      "menu"
+    ],
+    "handoff_semantics": "staged_handoff",
+    "requires_readiness_check": true,
+    "entry_points": [
+      {
+        "type": "terminal",
+        "ref": "terminal://arrivals/a1",
+        "description": "Primary airport arrivals terminal."
+      }
+    ]
+  },
+  "capabilities": {
+    "identity_required": true,
+    "supports_global_assets": true,
+    "supports_world_local_assets": true,
+    "supports_voice": true,
+    "supports_trading": true,
+    "supports_cross_world_party": false,
+    "economy_mode": "global_authoritative"
+  },
+  "health": {
+    "last_heartbeat_at": "2025-12-15T23:20:00.000Z",
+    "latency_ms_p50": 42,
+    "latency_ms_p95": 110,
+    "error_rate": 0.002,
+    "notes": "Fixture shard healthy."
+  },
+  "audit": {
+    "change_log_ref": "memory://audit/shards",
+    "last_change_id": "chg_shard_seed_001",
+    "last_changed_at": "2025-12-15T23:20:00.000Z",
+    "last_changed_by": "fixture.generator"
+  }
+}
