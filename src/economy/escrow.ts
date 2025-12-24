@@ -7,8 +7,63 @@ import { EscrowRecord } from "./types.js";
 export class EscrowService {
   private escrows = new Map<string, EscrowRecord>();
   private assetToEscrow = new Map<string, string>();
+  private transitionToAssets = new Map<string, string[]>();
 
   constructor(private ledger: EconomyLedger) {}
+
+  async lock(ownerId: string, assetIds: string[], changeId: string): Promise<EscrowRecord[]> {
+    if (!ownerId) throw new SecurityError("Owner id required for escrow lock.");
+    if (!changeId) throw new ConflictError("changeId required for escrow lock.");
+
+    if (this.transitionToAssets.has(changeId)) {
+      const existingAssets = this.transitionToAssets.get(changeId)!;
+      const same =
+        existingAssets.length === assetIds.length &&
+        existingAssets.every((assetId) => assetIds.includes(assetId));
+      if (!same) {
+        throw new ConflictError("Escrow lock already recorded with different assets.", {
+          change_id: changeId,
+          existing_assets: existingAssets,
+          requested_assets: assetIds
+        });
+      }
+
+      return existingAssets
+        .map((assetId) => this.assetToEscrow.get(assetId))
+        .filter((escrowId): escrowId is string => Boolean(escrowId))
+        .map((escrowId) => this.escrows.get(escrowId))
+        .filter((escrow): escrow is EscrowRecord => Boolean(escrow));
+    }
+
+    const held: EscrowRecord[] = [];
+    try {
+      for (const assetId of assetIds) {
+        held.push(await this.holdAsset(assetId, ownerId, changeId));
+      }
+      this.transitionToAssets.set(changeId, [...assetIds]);
+      return held;
+    } catch (err) {
+      await Promise.allSettled(
+        held.map((escrow) => this.rollbackAsset(escrow.asset_id, changeId, "escrow lock failed"))
+      );
+      throw err;
+    }
+  }
+
+  async release(ownerId: string, changeId: string): Promise<EscrowRecord[]> {
+    if (!ownerId) throw new SecurityError("Owner id required for escrow release.");
+    if (!changeId) throw new ConflictError("changeId required for escrow release.");
+
+    const assetIds = this.transitionToAssets.get(changeId) ?? [];
+    const released: EscrowRecord[] = [];
+    for (const assetId of assetIds) {
+      released.push(await this.releaseAsset(assetId, changeId));
+    }
+    if (assetIds.length > 0) {
+      this.transitionToAssets.delete(changeId);
+    }
+    return released;
+  }
 
   async holdAsset(assetId: string, ownerId: string, changeId: string): Promise<EscrowRecord> {
     // prevent double escrow
