@@ -1,7 +1,8 @@
 import Ajv, { ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { ValidationError } from "./errors.js";
 
 export type SchemaName =
@@ -44,7 +45,16 @@ export class SchemaRegistry {
   }
 }
 
-export function defaultSchemaRegistry(): SchemaRegistry {
-  // assumes process.cwd() at repo root
+export function defaultSchemaRegistry(baseDir?: string): SchemaRegistry {
+  if (baseDir) {
+    return new SchemaRegistry(resolve(baseDir, "schemas"));
+  }
+
+  const moduleRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+  const moduleSchemas = resolve(moduleRoot, "schemas");
+  if (existsSync(moduleSchemas)) {
+    return new SchemaRegistry(moduleSchemas);
+  }
+
   return new SchemaRegistry(resolve(process.cwd(), "schemas"));
 }

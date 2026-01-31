@@ -31,7 +31,8 @@ export class InMemoryEconomyLedger implements EconomyLedger {
     next.audit.last_changed_at = nowIso();
 
     // increment version defensively
-    next.integrity.version = (cur.integrity.version ?? 1) + 1;
+    const currentVersion = cur.integrity.version ?? 0;
+    next.integrity.version = currentVersion + 1;
 
     this.map.set(assetId, next);
     return next;

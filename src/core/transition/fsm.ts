@@ -72,7 +72,8 @@ export class ShardTransitionFSM {
       protected_assets,
       status: "prepared",
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      change_id_prepare: change_id
     };
 
     await this.deps.escrow.lock(identity_id, protected_assets, transition.transition_id);
@@ -106,12 +107,19 @@ export class ShardTransitionFSM {
     }
 
     const existing = await this.deps.transitions.findByChangeId(change_id);
-    if (existing) return existing;
+    if (existing) {
+      if (existing.transition_id !== transition.transition_id) {
+        throw new ConflictError("Change ID already used for another transition.", { change_id });
+      }
+      return existing;
+    }
 
-    transition.status = "committed";
-    transition.updated_at = new Date().toISOString();
-
-    await this.deps.transitions.put(transition);
+    const updated = await this.deps.transitions.update(transition_id, cur => ({
+      ...cur,
+      status: "committed",
+      updated_at: new Date().toISOString(),
+      change_id_commit: change_id
+    }));
 
     await this.deps.audit.record({
       type: "transition.committed",
@@ -120,7 +128,7 @@ export class ShardTransitionFSM {
       identity_id: transition.identity_id
     });
 
-    return transition;
+    return updated;
   }
 
   /**
@@ -141,14 +149,21 @@ export class ShardTransitionFSM {
     }
 
     const existing = await this.deps.transitions.findByChangeId(change_id);
-    if (existing) return existing;
+    if (existing) {
+      if (existing.transition_id !== transition.transition_id) {
+        throw new ConflictError("Change ID already used for another transition.", { change_id });
+      }
+      return existing;
+    }
 
     await this.deps.escrow.release(transition.identity_id, transition.transition_id);
 
-    transition.status = "confirmed";
-    transition.updated_at = new Date().toISOString();
-
-    await this.deps.transitions.put(transition);
+    const updated = await this.deps.transitions.update(transition_id, cur => ({
+      ...cur,
+      status: "confirmed",
+      updated_at: new Date().toISOString(),
+      change_id_confirm: change_id
+    }));
 
     await this.deps.audit.record({
       type: "transition.confirmed",
@@ -157,7 +172,7 @@ export class ShardTransitionFSM {
       identity_id: transition.identity_id
     });
 
-    return transition;
+    return updated;
   }
 
   /**
@@ -178,14 +193,21 @@ export class ShardTransitionFSM {
     }
 
     const existing = await this.deps.transitions.findByChangeId(change_id);
-    if (existing) return existing;
+    if (existing) {
+      if (existing.transition_id !== transition.transition_id) {
+        throw new ConflictError("Change ID already used for another transition.", { change_id });
+      }
+      return existing;
+    }
 
     await this.deps.escrow.release(transition.identity_id, transition.transition_id);
 
-    transition.status = "rolled_back";
-    transition.updated_at = new Date().toISOString();
-
-    await this.deps.transitions.put(transition);
+    const updated = await this.deps.transitions.update(transition_id, cur => ({
+      ...cur,
+      status: "rolled_back",
+      updated_at: new Date().toISOString(),
+      change_id_rollback: change_id
+    }));
 
     await this.deps.audit.record({
       type: "transition.rolled_back",
@@ -195,7 +217,7 @@ export class ShardTransitionFSM {
       metadata: { reason }
     });
 
-    return transition;
+    return updated;
   }
 
   /**
