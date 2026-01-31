@@ -9,7 +9,8 @@ export interface ShardTransition {
   identity_id: string;
   from_shard: string;
   to_shard: string;
-  started_at: string;
+  created_at: string;
+  updated_at: string;
   status: TransitionStatus;
 
   // assets that must be protected during transfer
@@ -19,6 +20,7 @@ export interface ShardTransition {
   change_id_prepare: string;
   change_id_commit?: string;
   change_id_confirm?: string;
+  change_id_rollback?: string;
 
   failure_reason?: string;
 }
