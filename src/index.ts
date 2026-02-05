@@ -16,3 +16,4 @@ export * from "./core/transition/types.js";
 export * from "./core/transition/fsm.js";
 export * from "./core/transition/in_memory_transition_store.js";
 export * from "./core/transition/transition_store.js";
+export * from "./adapters/redis_transition_store.js";
