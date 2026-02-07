@@ -17,9 +17,10 @@ export class EscrowService {
 
     if (this.transitionToAssets.has(changeId)) {
       const existingAssets = this.transitionToAssets.get(changeId)!;
+      const requestedAssets = new Set(assetIds);
       const same =
         existingAssets.length === assetIds.length &&
-        existingAssets.every((assetId) => assetIds.includes(assetId));
+        existingAssets.every((assetId) => requestedAssets.has(assetId));
       if (!same) {
         throw new ConflictError("Escrow lock already recorded with different assets.", {
           change_id: changeId,
@@ -28,11 +29,14 @@ export class EscrowService {
         });
       }
 
-      return existingAssets
-        .map((assetId) => this.assetToEscrow.get(assetId))
-        .filter((escrowId): escrowId is string => Boolean(escrowId))
-        .map((escrowId) => this.escrows.get(escrowId))
-        .filter((escrow): escrow is EscrowRecord => Boolean(escrow));
+      const records: EscrowRecord[] = [];
+      for (const assetId of existingAssets) {
+        const escrowId = this.assetToEscrow.get(assetId);
+        if (!escrowId) continue;
+        const escrow = this.escrows.get(escrowId);
+        if (escrow) records.push(escrow);
+      }
+      return records;
     }
 
     const held: EscrowRecord[] = [];
