@@ -74,8 +74,8 @@ export async function executeTransition(
     await input.options?.preflight?.(input);
 
     // Best-effort opportunistic sweep (bounded)
-    if (input.options?.sweep?.enabled && "sweep" in idempotency) {
-      await (idempotency as any).sweep?.(Date.now(), input.options.sweep.max_to_remove ?? 5000);
+    if (input.options?.sweep?.enabled) {
+      await idempotency.sweep(Date.now(), input.options.sweep.max_to_remove ?? 5000);
     }
 
     if (input.action === "begin") {
@@ -131,6 +131,9 @@ export async function executeTransition(
       );
 
       const transition = await ctx.fsm.getStore().get(transition_id);
+      if (!transition) {
+        throw new TransitionError("Controller produced missing transition.", { transition_id });
+      }
       const result: ExecuteTransitionResult = { action: "begin", kind: input.request.kind, transition, outcome };
       hooks?.onSuccess?.(result);
       return result;

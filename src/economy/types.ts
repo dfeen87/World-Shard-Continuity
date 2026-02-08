@@ -17,6 +17,7 @@ export interface AssetOwnershipRecord {
     quantity?: number;
     durability?: number;
     attributes?: Record<string, unknown>;
+    state_reason?: string;
   };
 
   lifecycle: {
@@ -60,4 +61,3 @@ export interface EscrowRecord {
   released_at?: string;
   status: "held" | "released" | "rolled_back";
 }
-

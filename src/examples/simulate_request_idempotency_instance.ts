@@ -96,7 +96,7 @@ async function main() {
   console.log("✅ request_id idempotency verified (instance)");
 
   // TTL expiration demo: advance time by manual sweep
-  await (idemp as any).sweep(Date.now() + 10_000, 10_000);
+  await idemp.sweep(Date.now() + 10_000, 10_000);
   const afterExpire = await idemp.get("instance_gate", request_id);
   assert(afterExpire === undefined, "After TTL, idempotency binding should expire.");
 

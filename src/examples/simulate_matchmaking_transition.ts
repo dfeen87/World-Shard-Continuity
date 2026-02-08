@@ -8,6 +8,8 @@ import { ShardTransitionFSM } from "../core/transition/fsm.js";
 
 import { createDefaultRegistry } from "../transitions/createDefaultRegistry.js";
 import { executeTransition } from "../transitions/executeTransition.js";
+import { InMemoryRequestIdempotencyStore } from "../transitions/requestIdempotencyStore.js";
+import type { TransitionKind } from "../transitions/base/transition_types.js";
 
 function assert(cond: unknown, msg: string) {
   if (!cond) throw new Error(`ASSERT FAILED: ${msg}`);
@@ -26,6 +28,7 @@ async function main() {
 
   const ctx = { fsm, identityStore, ledger, actor };
   const registry = createDefaultRegistry(ctx);
+  const idempotency = new InMemoryRequestIdempotencyStore();
 
   // Seed identity
   const pid = newId("pid", 16);
@@ -63,11 +66,13 @@ async function main() {
   console.log(`Asset=${aid}`);
 
   // Begin matchmaking transition (prepare+commit)
-  const begin = await executeTransition(ctx, registry, {
+  const kind: TransitionKind = "matchmaking_queue";
+  const begin = await executeTransition(ctx, registry, idempotency, {
     action: "begin",
+    request_id: "req_mm_begin_001",
     change_id: "chg_mm_begin_001",
     request: {
-      kind: "matchmaking_queue",
+      kind,
       identity_id: pid,
       from_shard: "sid_world_hub",
       // to_shard may be assigned by matchmaker later; we provide one for simulation clarity
@@ -85,9 +90,9 @@ async function main() {
   assert(afterBegin?.state.status === "escrow", "Asset should be escrowed during match.");
 
   // Simulate match completion: confirm transition to release escrow
-  const confirm = await executeTransition(ctx, registry, {
+  const confirm = await executeTransition(ctx, registry, idempotency, {
     action: "confirm",
-    kind: "matchmaking_queue",
+    kind,
     transition_id,
     change_id: "chg_mm_confirm_001",
     outcome: { success: true, flags: ["win"], currency_delta: 100 }

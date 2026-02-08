@@ -33,6 +33,10 @@ function schemaFromPath(fixturesRoot: string, filePath: string): SchemaName | nu
   return null;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
 function main() {
   const fixturesRoot = resolve(process.cwd(), "examples", "fixtures");
   const reg = defaultSchemaRegistry();
@@ -58,17 +62,26 @@ function main() {
       const data = JSON.parse(raw);
       reg.validateOrThrow(schema, data);
       console.log(`OK   [${schema}] ${basename(f)}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       failures++;
       console.error(`FAIL [${schema}] ${f}`);
-      if (err?.code) console.error(`  code: ${err.code}`);
-      if (err?.message) console.error(`  msg : ${err.message}`);
-      if (err?.details?.errors) {
+      if (isRecord(err) && "code" in err && typeof err.code === "string") {
+        console.error(`  code: ${err.code}`);
+      }
+      if (err instanceof Error) {
+        console.error(`  msg : ${err.message}`);
+      }
+      if (isRecord(err) && "details" in err && isRecord(err.details) && Array.isArray(err.details.errors)) {
         // AJV error list can be long; print a compact view
-        for (const e of err.details.errors.slice(0, 10)) {
-          console.error(`  ajv : ${e.instancePath || "(root)"} ${e.message}`);
+        const errors = err.details.errors;
+        for (const e of errors.slice(0, 10)) {
+          if (isRecord(e)) {
+            const instancePath = typeof e.instancePath === "string" ? e.instancePath : "(root)";
+            const message = typeof e.message === "string" ? e.message : "invalid";
+            console.error(`  ajv : ${instancePath} ${message}`);
+          }
         }
-        if (err.details.errors.length > 10) console.error(`  ajv : ... (${err.details.errors.length - 10} more)`);
+        if (errors.length > 10) console.error(`  ajv : ... (${errors.length - 10} more)`);
       }
     }
   }

@@ -60,8 +60,8 @@ function seedAsset(ledger: InMemoryEconomyLedger, ownerPid: string, scope: "glob
     asset_class: "item",
     asset_type: "demo_item",
     scope,
-    world_ref: world,
-    shard_ref: shard,
+    ...(world ? { world_ref: world } : {}),
+    ...(shard ? { shard_ref: shard } : {}),
     owner: { owner_type: "player", owner_id: ownerPid },
     state: { status: "active", quantity: 1, attributes: { label: "AirportCase" } },
     lifecycle: {
