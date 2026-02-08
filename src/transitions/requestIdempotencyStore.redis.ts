@@ -1,4 +1,4 @@
-import type { RequestIdempotencyStore } from "./requestIdempotencyStore.js";
+import type { IdempotencyRecord, RequestIdempotencyStore } from "./requestIdempotencyStore.js";
 
 /**
  * Redis adapter skeleton (production-ready shape).
@@ -12,8 +12,7 @@ import type { RequestIdempotencyStore } from "./requestIdempotencyStore.js";
  *   TTL = ttl_ms
  */
 export class RedisRequestIdempotencyStore implements RequestIdempotencyStore {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(private readonly redis: any, private readonly keyPrefix = "wsc:idemp") {}
+  constructor(private readonly redis: RedisClient, private readonly keyPrefix = "wsc:idemp") {}
 
   async get(kind: string, request_id: string): Promise<string | undefined> {
     const v = await this.redis.get(`${this.keyPrefix}:${kind}:${request_id}`);
@@ -31,7 +30,7 @@ export class RedisRequestIdempotencyStore implements RequestIdempotencyStore {
     await this.redis.set(key, transition_id, "PX", ttl_ms);
   }
 
-  async peek(): Promise<any> {
+  async peek(): Promise<IdempotencyRecord | undefined> {
     throw new Error("peek not implemented for redis adapter skeleton");
   }
 
@@ -43,4 +42,9 @@ export class RedisRequestIdempotencyStore implements RequestIdempotencyStore {
   stats(): { size: number; hits: number; misses: number; evictions: number } {
     return { size: -1, hits: 0, misses: 0, evictions: 0 };
   }
+}
+
+interface RedisClient {
+  get(key: string): Promise<string | null>;
+  set(key: string, value: string, mode: "PX", duration: number): Promise<unknown>;
 }
