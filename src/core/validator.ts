@@ -1,4 +1,5 @@
-import Ajv, { ValidateFunction } from "ajv";
+import { ValidateFunction } from "ajv";
+import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -11,11 +12,16 @@ export type SchemaName =
   | "world-shard";
 
 export class SchemaRegistry {
-  private ajv: Ajv;
+  private ajv: Ajv2020;
   private validators = new Map<SchemaName, ValidateFunction>();
 
   constructor(private readonly schemaDirAbs: string) {
-    this.ajv = new Ajv({ allErrors: true, strict: true, validateFormats: true });
+    this.ajv = new Ajv2020({
+      allErrors: true,
+      strictRequired: false,
+      strict: true,
+      validateFormats: true
+    });
     addFormats(this.ajv);
 
     // Important: schemas reference only internal defs, so we can compile directly.
