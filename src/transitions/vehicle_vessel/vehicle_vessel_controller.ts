@@ -32,6 +32,7 @@ export class VehicleVesselController extends TransitionController {
     return {
       success: true,
       flags: ["in_transit"],
+      transition_id: t.transition_id,
     };
   }
 }

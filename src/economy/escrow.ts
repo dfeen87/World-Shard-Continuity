@@ -106,7 +106,7 @@ export class EscrowService {
     const escrow = this.escrows.get(escrowId)!;
     if (escrow.status !== "held") return escrow;
 
-    await this.ledger.mutate(assetId, changeId, (cur) => {
+    await this.ledger.mutate(assetId, `${changeId}:release`, (cur) => {
       if (cur.state.status !== "escrow") return cur;
       return { ...cur, state: { ...cur.state, status: "active" } };
     });
@@ -124,7 +124,7 @@ export class EscrowService {
     const escrow = this.escrows.get(escrowId)!;
     if (escrow.status !== "held") return escrow;
 
-    await this.ledger.mutate(assetId, changeId, (cur) => {
+    await this.ledger.mutate(assetId, `${changeId}:rollback`, (cur) => {
       // rollback to active; higher-level systems may apply additional repairs
       return { ...cur, state: { ...cur.state, status: "active", state_reason: reason } };
     });
