@@ -28,6 +28,7 @@ export class MatchmakingController extends TransitionController {
     return {
       success: true,
       flags: ["match_started"],
+      transition_id: t.transition_id,
     };
   }
 }

@@ -31,7 +31,8 @@ export class InstanceGateController extends TransitionController {
 
     return {
       success: true,
-      flags: ["instance_entered"]
+      flags: ["instance_entered"],
+      transition_id: t.transition_id
     };
   }
 }
