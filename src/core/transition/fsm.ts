@@ -1,4 +1,10 @@
-import type { AuditSink } from "../audit.js";
+import {
+  createTransitionCommittedEvent,
+  createTransitionConfirmedEvent,
+  createTransitionPreparedEvent,
+  createTransitionRolledBackEvent,
+  type AuditSink
+} from "../audit.js";
 import type { TransitionStore } from "./transition_store.js";
 import type { ShardTransition } from "./types.js";
 import type { EscrowService } from "../../economy/escrow.js";
@@ -79,13 +85,15 @@ export class ShardTransitionFSM {
     await this.deps.escrow.lock(identity_id, protected_assets, transition.transition_id);
     await this.deps.transitions.put(transition);
 
-    await this.deps.audit.record({
-      type: "transition.prepared",
-      actor,
-      transition_id: transition.transition_id,
-      identity_id,
-      metadata: { from_shard, to_shard }
-    });
+    await this.deps.audit.record(
+      createTransitionPreparedEvent({
+        actor,
+        transition_id: transition.transition_id,
+        identity_id,
+        from_shard,
+        to_shard
+      })
+    );
 
     return transition;
   }
@@ -121,12 +129,13 @@ export class ShardTransitionFSM {
       change_id_commit: change_id
     }));
 
-    await this.deps.audit.record({
-      type: "transition.committed",
-      actor,
-      transition_id,
-      identity_id: transition.identity_id
-    });
+    await this.deps.audit.record(
+      createTransitionCommittedEvent({
+        actor,
+        transition_id,
+        identity_id: transition.identity_id
+      })
+    );
 
     return updated;
   }
@@ -165,12 +174,13 @@ export class ShardTransitionFSM {
       change_id_confirm: change_id
     }));
 
-    await this.deps.audit.record({
-      type: "transition.confirmed",
-      actor,
-      transition_id,
-      identity_id: transition.identity_id
-    });
+    await this.deps.audit.record(
+      createTransitionConfirmedEvent({
+        actor,
+        transition_id,
+        identity_id: transition.identity_id
+      })
+    );
 
     return updated;
   }
@@ -209,13 +219,14 @@ export class ShardTransitionFSM {
       change_id_rollback: change_id
     }));
 
-    await this.deps.audit.record({
-      type: "transition.rolled_back",
-      actor,
-      transition_id,
-      identity_id: transition.identity_id,
-      metadata: { reason }
-    });
+    await this.deps.audit.record(
+      createTransitionRolledBackEvent({
+        actor,
+        transition_id,
+        identity_id: transition.identity_id,
+        reason
+      })
+    );
 
     return updated;
   }

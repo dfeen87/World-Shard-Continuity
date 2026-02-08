@@ -74,8 +74,8 @@ export async function executeTransition(
     await input.options?.preflight?.(input);
 
     // Best-effort opportunistic sweep (bounded)
-    if (input.options?.sweep?.enabled && "sweep" in idempotency) {
-      await (idempotency as any).sweep?.(Date.now(), input.options.sweep.max_to_remove ?? 5000);
+    if (input.options?.sweep?.enabled) {
+      await idempotency.sweep(Date.now(), input.options.sweep.max_to_remove ?? 5000);
     }
 
     if (input.action === "begin") {
@@ -116,7 +116,7 @@ export async function executeTransition(
       await registry.validate(input.request);
 
       const controller = registry.get(input.request.kind);
-      const outcome = await controller.execute(input.request, input.change_id);
+      const outcome = await controller.execute(input.request);
 
       const transition_id = outcome.transition_id;
       if (!transition_id) {
@@ -131,6 +131,9 @@ export async function executeTransition(
       );
 
       const transition = await ctx.fsm.getStore().get(transition_id);
+      if (!transition) {
+        throw new TransitionError("Controller produced missing transition.", { transition_id });
+      }
       const result: ExecuteTransitionResult = { action: "begin", kind: input.request.kind, transition, outcome };
       hooks?.onSuccess?.(result);
       return result;
@@ -142,7 +145,9 @@ export async function executeTransition(
 
     if (input.action === "confirm") {
       const t = await ctx.fsm.confirm(ctx.actor, input.transition_id, input.change_id);
-      const result: ExecuteTransitionResult = { action: "confirm", kind: input.kind, transition: t, outcome: input.outcome };
+      const result: ExecuteTransitionResult = input.outcome
+        ? { action: "confirm", kind: input.kind, transition: t, outcome: input.outcome }
+        : { action: "confirm", kind: input.kind, transition: t };
       hooks?.onSuccess?.(result);
       return result;
     }

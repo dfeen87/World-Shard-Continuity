@@ -80,11 +80,7 @@ class FakeRedisClient implements RedisLikeClient {
 class FakeAudit {
   events: unknown[] = [];
 
-  emit(event: unknown): void {
-    this.events.push(event);
-  }
-
-  async record(event: unknown): Promise<void> {
+  record(event: unknown): void {
     this.events.push(event);
   }
 }

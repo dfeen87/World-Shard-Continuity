@@ -1,7 +1,7 @@
 import { TransitionControllerRegistry } from "./TransitionControllerRegistry.js";
 import type { TransitionContext } from "./base/transition_context.js";
-import { InstanceGateController } from "./instance_gate/InstanceGateController.js";
-import { MatchmakingController } from "./matchmaking/MatchmakingController.js";
+import { InstanceGateController } from "./instance_gate/instance_gate_controller.js";
+import { MatchmakingController } from "./matchmaking/matchmaking_controller.js";
 
 /**
  * Default registry for v1:

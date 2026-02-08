@@ -126,7 +126,7 @@ export class EscrowService {
 
     await this.ledger.mutate(assetId, changeId, (cur) => {
       // rollback to active; higher-level systems may apply additional repairs
-      return { ...cur, state: { ...cur.state, status: "active" }, state_reason: reason } as any;
+      return { ...cur, state: { ...cur.state, status: "active", state_reason: reason } };
     });
 
     const next: EscrowRecord = { ...escrow, status: "rolled_back", released_at: nowIso() };

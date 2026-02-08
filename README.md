@@ -1,5 +1,7 @@
 # World-Shard Continuity
 
+[![CI](https://github.com/World-Shard-Continuity/World-Shard-Continuity/actions/workflows/ci.yml/badge.svg)](https://github.com/World-Shard-Continuity/World-Shard-Continuity/actions/workflows/ci.yml)
+
 A reference architecture and execution model for identity-safe, asset-safe, long-lived game worlds.
 
 This repository defines how players, assets, and economies move safely and deterministically across worlds, shards, instances, matches, and migrations — without resets, duplication, or trust erosion.
@@ -217,6 +219,31 @@ Continuity — done correctly — preserves it.
 ```bash
 npm run sim:quick   # see retry-safe transitions in action
 npm run sim:all     # full behavioral confidence run
+```
+
+## Continuous Integration
+
+CI runs on every push and pull request to keep the core continuity engine
+healthy and deterministic. It validates compilation, type safety, fixtures, and
+the core invariants exercised by the simulation and test suites.
+
+**What CI checks**
+
+* TypeScript typechecking and project build.
+* Fixture validation and deterministic simulations for continuity, state sync,
+  and idempotency guarantees.
+* Core unit tests for transition store contracts.
+
+**What CI intentionally does NOT check**
+
+* No multi-node or distributed infrastructure tests.
+* No external service or network-dependent integration checks.
+
+**Run CI checks locally**
+
+```bash
+npm install
+npm run ci
 ```
 
 ---
