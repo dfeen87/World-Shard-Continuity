@@ -116,7 +116,7 @@ export async function executeTransition(
       await registry.validate(input.request);
 
       const controller = registry.get(input.request.kind);
-      const outcome = await controller.execute(input.request, input.change_id);
+      const outcome = await controller.execute(input.request);
 
       const transition_id = outcome.transition_id;
       if (!transition_id) {
@@ -145,7 +145,9 @@ export async function executeTransition(
 
     if (input.action === "confirm") {
       const t = await ctx.fsm.confirm(ctx.actor, input.transition_id, input.change_id);
-      const result: ExecuteTransitionResult = { action: "confirm", kind: input.kind, transition: t, outcome: input.outcome };
+      const result: ExecuteTransitionResult = input.outcome
+        ? { action: "confirm", kind: input.kind, transition: t, outcome: input.outcome }
+        : { action: "confirm", kind: input.kind, transition: t };
       hooks?.onSuccess?.(result);
       return result;
     }
