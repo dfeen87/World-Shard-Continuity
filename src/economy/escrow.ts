@@ -32,9 +32,21 @@ export class EscrowService {
       const records: EscrowRecord[] = [];
       for (const assetId of existingAssets) {
         const escrowId = this.assetToEscrow.get(assetId);
-        if (!escrowId) continue;
+        if (!escrowId) {
+          throw new ConflictError("Asset escrow missing during idempotent lock replay.", {
+            asset_id: assetId,
+            change_id: changeId
+          });
+        }
         const escrow = this.escrows.get(escrowId);
-        if (escrow) records.push(escrow);
+        if (!escrow) {
+          throw new ConflictError("Escrow record missing during idempotent lock replay.", {
+            asset_id: assetId,
+            escrow_id: escrowId,
+            change_id: changeId
+          });
+        }
+        records.push(escrow);
       }
       return records;
     }
