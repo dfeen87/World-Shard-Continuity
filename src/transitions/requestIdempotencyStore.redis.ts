@@ -1,4 +1,5 @@
 import type { IdempotencyRecord, RequestIdempotencyStore } from "./requestIdempotencyStore.js";
+import { ConflictError, ValidationError } from "../core/errors.js";
 
 /**
  * Redis adapter skeleton (production-ready shape).
@@ -25,13 +26,13 @@ export class RedisRequestIdempotencyStore implements RequestIdempotencyStore {
     const key = `${this.keyPrefix}:${kind}:${request_id}`;
     const existing = await this.redis.get(key);
     if (existing && existing !== transition_id) {
-      throw new Error("request_id already bound to a different transition_id");
+      throw new ConflictError("request_id already bound to a different transition_id");
     }
     await this.redis.set(key, transition_id, "PX", ttl_ms);
   }
 
   async peek(): Promise<IdempotencyRecord | undefined> {
-    throw new Error("peek not implemented for redis adapter skeleton");
+    throw new ValidationError("peek not implemented for redis adapter skeleton");
   }
 
   async sweep(): Promise<number> {
