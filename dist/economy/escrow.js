@@ -1,0 +1,128 @@
+import { ConflictError, SecurityError } from "../core/errors.js";
+import { newId } from "../core/ids.js";
+import { nowIso } from "../core/time.js";
+export class EscrowService {
+    ledger;
+    escrows = new Map();
+    assetToEscrow = new Map();
+    transitionToAssets = new Map();
+    constructor(ledger) {
+        this.ledger = ledger;
+    }
+    async lock(ownerId, assetIds, changeId) {
+        if (!ownerId)
+            throw new SecurityError("Owner id required for escrow lock.");
+        if (!changeId)
+            throw new ConflictError("changeId required for escrow lock.");
+        if (this.transitionToAssets.has(changeId)) {
+            const existingAssets = this.transitionToAssets.get(changeId);
+            const requestedAssets = new Set(assetIds);
+            const same = existingAssets.length === assetIds.length &&
+                existingAssets.every((assetId) => requestedAssets.has(assetId));
+            if (!same) {
+                throw new ConflictError("Escrow lock already recorded with different assets.", {
+                    change_id: changeId,
+                    existing_assets: existingAssets,
+                    requested_assets: assetIds
+                });
+            }
+            const records = [];
+            for (const assetId of existingAssets) {
+                const escrowId = this.assetToEscrow.get(assetId);
+                if (!escrowId)
+                    continue;
+                const escrow = this.escrows.get(escrowId);
+                if (escrow)
+                    records.push(escrow);
+            }
+            return records;
+        }
+        const held = [];
+        try {
+            for (const assetId of assetIds) {
+                held.push(await this.holdAsset(assetId, ownerId, changeId));
+            }
+            this.transitionToAssets.set(changeId, [...assetIds]);
+            return held;
+        }
+        catch (err) {
+            await Promise.allSettled(held.map((escrow) => this.rollbackAsset(escrow.asset_id, changeId, "escrow lock failed")));
+            throw err;
+        }
+    }
+    async release(ownerId, changeId) {
+        if (!ownerId)
+            throw new SecurityError("Owner id required for escrow release.");
+        if (!changeId)
+            throw new ConflictError("changeId required for escrow release.");
+        const assetIds = this.transitionToAssets.get(changeId) ?? [];
+        const released = [];
+        for (const assetId of assetIds) {
+            released.push(await this.releaseAsset(assetId, changeId));
+        }
+        if (assetIds.length > 0) {
+            this.transitionToAssets.delete(changeId);
+        }
+        return released;
+    }
+    async holdAsset(assetId, ownerId, changeId) {
+        // prevent double escrow
+        if (this.assetToEscrow.has(assetId)) {
+            throw new ConflictError("Asset already escrowed.", { asset_id: assetId, escrow_id: this.assetToEscrow.get(assetId) });
+        }
+        const asset = await this.ledger.get(assetId);
+        if (!asset)
+            throw new SecurityError("Cannot escrow non-existent asset.", { asset_id: assetId });
+        if (asset.owner.owner_id !== ownerId)
+            throw new SecurityError("Only the owner can escrow an asset.", { asset_id: assetId });
+        await this.ledger.mutate(assetId, changeId, (cur) => {
+            if (cur.state.status !== "active") {
+                throw new ConflictError("Asset must be active to escrow.", { asset_id: assetId, status: cur.state.status });
+            }
+            return { ...cur, state: { ...cur.state, status: "escrow" } };
+        });
+        const escrow = {
+            escrow_id: newId("tx", 16),
+            asset_id: assetId,
+            owner_id: ownerId,
+            created_at: nowIso(),
+            status: "held"
+        };
+        this.escrows.set(escrow.escrow_id, escrow);
+        this.assetToEscrow.set(assetId, escrow.escrow_id);
+        return escrow;
+    }
+    async releaseAsset(assetId, changeId) {
+        const escrowId = this.assetToEscrow.get(assetId);
+        if (!escrowId)
+            throw new ConflictError("Asset not escrowed.", { asset_id: assetId });
+        const escrow = this.escrows.get(escrowId);
+        if (escrow.status !== "held")
+            return escrow;
+        await this.ledger.mutate(assetId, `${changeId}:release`, (cur) => {
+            if (cur.state.status !== "escrow")
+                return cur;
+            return { ...cur, state: { ...cur.state, status: "active" } };
+        });
+        const next = { ...escrow, status: "released", released_at: nowIso() };
+        this.escrows.set(escrowId, next);
+        this.assetToEscrow.delete(assetId);
+        return next;
+    }
+    async rollbackAsset(assetId, changeId, reason) {
+        const escrowId = this.assetToEscrow.get(assetId);
+        if (!escrowId)
+            throw new ConflictError("Asset not escrowed.", { asset_id: assetId });
+        const escrow = this.escrows.get(escrowId);
+        if (escrow.status !== "held")
+            return escrow;
+        await this.ledger.mutate(assetId, `${changeId}:rollback`, (cur) => {
+            // rollback to active; higher-level systems may apply additional repairs
+            return { ...cur, state: { ...cur.state, status: "active", state_reason: reason } };
+        });
+        const next = { ...escrow, status: "rolled_back", released_at: nowIso() };
+        this.escrows.set(escrowId, next);
+        this.assetToEscrow.delete(assetId);
+        return next;
+    }
+}
