@@ -389,13 +389,6 @@ Continuity — done correctly — preserves it.
 
 ---
 
-## Getting Started (Fast Path)
-
-```bash
-npm run sim:quick   # see retry-safe transitions in action
-npm run sim:all     # full behavioral confidence run
-```
-
 ## Continuous Integration
 
 CI runs on every push and pull request to keep the core continuity engine
