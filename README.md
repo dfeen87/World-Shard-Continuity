@@ -1,6 +1,7 @@
 # World-Shard Continuity
 
 [![CI](https://github.com/World-Shard-Continuity/World-Shard-Continuity/actions/workflows/ci.yml/badge.svg)](https://github.com/World-Shard-Continuity/World-Shard-Continuity/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 A reference architecture and execution model for identity-safe, asset-safe, long-lived game worlds.
 
@@ -9,6 +10,23 @@ This repository defines how players, assets, and economies move safely and deter
 **It is not a game engine.**  
 **It is not a backend framework.**  
 **It is the missing continuity layer beneath modern online games.**
+
+## Table of Contents
+
+- [Why This Exists](#why-this-exists)
+- [What This Repo Provides](#what-this-repo-provides)
+- [What This Repo Intentionally Does NOT Include](#what-this-repo-intentionally-does-not-include)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Getting Started (Fast Path)](#getting-started-fast-path)
+- [Project Structure](#project-structure)
+- [Related Contracts](#related-contracts)
+- [API Documentation](#api-documentation)
+- [Who This Is For](#who-this-is-for)
+- [Contributing](#contributing)
+- [Continuous Integration](#continuous-integration)
+- [Versioning Philosophy](#versioning-philosophy)
+- [License](#license)
 
 ## Why This Exists
 
@@ -160,6 +178,77 @@ Including those concerns would:
 
 This repo is designed to age well.
 
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js** (v18 or higher recommended)
+- **npm** (v9 or higher)
+- A Unix-like environment (Linux, macOS, WSL on Windows)
+
+## Installation
+
+Clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/dfeen87/World-Shard-Continuity.git
+cd World-Shard-Continuity
+npm install
+npm run build
+```
+
+## Getting Started (Fast Path)
+
+Run the quick simulation to see retry-safe transitions in action:
+
+```bash
+npm run sim:quick   # see retry-safe transitions in action
+npm run sim:all     # full behavioral confidence run
+```
+
+To run all CI checks locally:
+
+```bash
+npm run ci
+```
+
+## Project Structure
+
+```
+World-Shard-Continuity/
+├── contracts/              # Formal continuity contracts
+│   ├── economy-persistence.contract.md
+│   ├── identity-persistence.contract.md
+│   └── world-transition.contract.md
+├── docs/                   # Architecture and design documentation
+│   ├── design-principles.md
+│   ├── how-to-read-this-repo.md
+│   ├── identity-and-asset-continuity.md
+│   ├── economy-continuity.md
+│   └── narrative-timeline-layering.md
+├── examples/               # Example fixtures and demonstrations
+├── reference-architectures/ # Production-grade transition patterns
+│   ├── airport-terminal-transition.md
+│   ├── instance-gate-transition.md
+│   ├── matchmaking-queue-transition.md
+│   ├── vehicle-or-vessel-transition.md
+│   └── world-sunsetting-migration.md
+├── schemas/                # JSON schemas for persistence
+│   ├── asset-ownership.schema.json
+│   ├── player-identity.schema.json
+│   └── world-shard.schema.json
+├── src/                    # Core implementation
+│   ├── core/              # Transition execution engine
+│   ├── transitions/       # Transition controllers and FSM
+│   ├── economy/           # Escrow and economic guarantees
+│   ├── identity/          # Identity persistence
+│   └── adapters/          # Persistence adapters
+└── tests/                  # Contract tests
+
+```
+
+For a complete guide on how to navigate this repository, see [docs/how-to-read-this-repo.md](docs/how-to-read-this-repo.md).
+
 ## Related Contracts
 
 This repository includes formal contracts and guidance documents that define
@@ -183,6 +272,33 @@ system-level guarantees beyond individual transition patterns.
 These documents are normative and intended to guide implementation,
 verification, and long-term evolution of continuity-safe systems.
 
+## API Documentation
+
+### Core Concepts
+
+- **[Design Principles](docs/design-principles.md)** - Foundational architectural principles
+- **[Problem Space](docs/problem-space.md)** - Understanding continuity challenges
+- **[How to Read This Repo](docs/how-to-read-this-repo.md)** - Navigation guide
+
+### Continuity Layers
+
+- **[Identity & Asset Continuity](docs/identity-and-asset-continuity.md)** - Player and asset persistence
+- **[Economy Continuity](docs/economy-continuity.md)** - Economic integrity guarantees
+- **[Narrative Timeline Layering](docs/narrative-timeline-layering.md)** - Story state management
+
+### Transition Patterns
+
+- **[Shard Transition Patterns](docs/shard-transition-patterns.md)** - Overview of transition types
+- **[Airport Terminal Transition](reference-architectures/airport-terminal-transition.md)** - Scheduled world travel
+- **[Instance Gate Transition](reference-architectures/instance-gate-transition.md)** - Dungeons and instances
+- **[Matchmaking Queue Transition](reference-architectures/matchmaking-queue-transition.md)** - Queue-based matches
+- **[Vehicle/Vessel Transition](reference-architectures/vehicle-or-vessel-transition.md)** - Shared transit
+- **[World Sunsetting & Migration](reference-architectures/world-sunsetting-migration.md)** - Safe world retirement
+
+### Schemas
+
+See the [schemas/](schemas/) directory for JSON schema definitions of persistent structures.
+
 ## Who This Is For
 
 * Backend / platform engineers
@@ -190,6 +306,33 @@ verification, and long-term evolution of continuity-safe systems.
 * Game studios building long-lived worlds
 * Researchers studying online system continuity
 * Anyone tired of "just reset it" as a solution
+
+## Contributing
+
+Contributions are welcome! This project values:
+
+- **Correctness over features** - Precision and determinism are paramount
+- **Clarity over cleverness** - Code should be auditable and understandable
+- **Contracts over code** - Guarantees must be explicit and enforceable
+
+### How to Contribute
+
+1. **Read the documentation** - Start with [docs/how-to-read-this-repo.md](docs/how-to-read-this-repo.md)
+2. **Understand the contracts** - Review the normative contracts in [contracts/](contracts/)
+3. **Run the test suite** - Ensure `npm run ci` passes before making changes
+4. **Keep changes minimal** - Surgical precision over sweeping refactors
+5. **Update documentation** - If you change contracts or patterns, update related docs
+
+### Before Submitting
+
+```bash
+npm run typecheck  # Verify TypeScript types
+npm run build      # Ensure clean build
+npm run test       # Run contract tests
+npm run sim:all    # Validate simulations
+```
+
+Questions or proposals? Open an issue to discuss before implementing.
 
 ## Versioning Philosophy
 
@@ -205,6 +348,36 @@ The surface area is frozen.
 The guarantees are strong.  
 Future versions will extend — not rewrite.
 
+## Troubleshooting
+
+### Common Issues
+
+**Build fails with TypeScript errors**
+```bash
+npm run clean
+npm install
+npm run build
+```
+
+**Simulations don't run**
+- Ensure you've run `npm run build` first
+- Check that Node.js version is 18 or higher: `node --version`
+
+**Tests fail unexpectedly**
+- Run `npm run clean && npm run build` to ensure fresh build
+- Check that all dependencies are installed: `npm install`
+
+**Need help?**
+- Review [docs/how-to-read-this-repo.md](docs/how-to-read-this-repo.md) for guidance
+- Check existing issues in the repository
+- Open a new issue with detailed reproduction steps
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+Copyright (c) 2025 Don Michael Feeney Jr
+
 ## Final Note
 
 This project is not about features.
@@ -213,6 +386,8 @@ This project is not about features.
 
 Once lost, trust is nearly impossible to regain.  
 Continuity — done correctly — preserves it.
+
+---
 
 ## Getting Started (Fast Path)
 
