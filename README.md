@@ -26,7 +26,9 @@ This repository defines how players, assets, and economies move safely and deter
 - [Contributing](#contributing)
 - [Continuous Integration](#continuous-integration)
 - [Versioning Philosophy](#versioning-philosophy)
+- [Acknowledgements](#acknowledgements)
 - [License](#license)
+- [Final Note](#final-note)
 
 ## Why This Exists
 
@@ -372,6 +374,12 @@ npm run build
 - Check existing issues in the repository
 - Open a new issue with detailed reproduction steps
 
+---
+
+## Acknowledgements
+
+I would like to acknowledge **Microsoft Copilot**, **Anthropic Claude**, and **OpenAI ChatGPT** for their meaningful assistance in refining concepts, improving clarity, and strengthening the overall quality of this work.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -386,33 +394,6 @@ This project is not about features.
 
 Once lost, trust is nearly impossible to regain.  
 Continuity — done correctly — preserves it.
-
----
-
-## Continuous Integration
-
-CI runs on every push and pull request to keep the core continuity engine
-healthy and deterministic. It validates compilation, type safety, fixtures, and
-the core invariants exercised by the simulation and test suites.
-
-**What CI checks**
-
-* TypeScript typechecking and project build.
-* Fixture validation and deterministic simulations for continuity, state sync,
-  and idempotency guarantees.
-* Core unit tests for transition store contracts.
-
-**What CI intentionally does NOT check**
-
-* No multi-node or distributed infrastructure tests.
-* No external service or network-dependent integration checks.
-
-**Run CI checks locally**
-
-```bash
-npm install
-npm run ci
-```
 
 ---
 
