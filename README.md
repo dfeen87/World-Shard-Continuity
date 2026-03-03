@@ -1,7 +1,6 @@
 # World-Shard Continuity
 
 [![CI](https://github.com/dfeen87/World-Shard-Continuity/actions/workflows/ci.yml/badge.svg)](https://github.com/dfeen87/World-Shard-Continuity/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 A reference architecture and execution model for identity-safe, asset-safe, long-lived game worlds.
 
@@ -382,9 +381,10 @@ I would like to acknowledge **Microsoft Copilot**, **Anthropic Claude**, and **O
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is available for **non‑commercial use only** under the terms of the included LICENSE file.  
+Commercial use requires a separate paid license.
 
-Copyright (c) 2025 Don Michael Feeney Jr
+---
 
 ## Final Note
 
