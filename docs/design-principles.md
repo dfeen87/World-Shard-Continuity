@@ -1,6 +1,6 @@
 # Design Principles
 
-This document defines the core principles that guide the architecture of world-shard-continuity. These principles are engine-agnostic, IP-neutral, and intended to support long-lived, distributed game platforms.
+This document defines the core principles that guide the architecture of world-shard-continuity. These principles are engine-agnostic, IP-neutral, and intended to support long-lived, distributed game platforms at a product-grade level.
 
 ## 1. Continuity Over Replacement
 
