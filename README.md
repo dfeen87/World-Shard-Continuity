@@ -200,10 +200,9 @@ npm run build
 
 ## Getting Started (Fast Path)
 
-Run the quick simulation to see retry-safe transitions in action:
+Run simulations to see retry-safe transitions in action:
 
 ```bash
-npm run sim:quick   # see retry-safe transitions in action
 npm run sim:all     # full behavioral confidence run
 ```
 
@@ -337,11 +336,11 @@ Questions or proposals? Open an issue to discuss before implementing.
 
 ## Versioning Philosophy
 
-This repository is tagged **v1.0.0**.
+This repository is tagged **v3.2.1**.
 
 However, it intentionally includes:
 
-* v1.1-grade idempotency
+* v3.x-grade idempotency
 * production-level failure handling
 * extensibility hooks
 
@@ -381,8 +380,9 @@ I would like to acknowledge **Microsoft Copilot**, **Anthropic Claude**, and **O
 
 ## License
 
-This project is available for **non‑commercial use only** under the terms of the included LICENSE file.  
-Commercial use requires a separate paid license.
+This repository uses a **hybrid license model**. It is freely available for **non‑commercial, evaluation, and research use** under the terms of the included LICENSE file.
+
+A **commercial license** is required for production integration, revenue-generating projects, or enterprise use. Please refer to the `LICENSE` file for details on commercial potential and contact information.
 
 ---
 

@@ -11,7 +11,7 @@ This document defines the **problem space** addressed by the World-Shard Continu
 repository.
 
 It describes the systemic failures observed in long-lived online games and
-persistent worlds that motivate the architectures and contracts defined elsewhere
+persistent worlds that motivate the product-grade architectures and contracts defined elsewhere
 in this project.
 
 This document intentionally avoids proposing solutions.  

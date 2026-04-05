@@ -23,7 +23,7 @@ This document explains how to approach it without cognitive overload.
 - A full game engine
 - A networking stack
 - A cloud-specific implementation
-- A production drop-in SDK
+- A complete product drop-in SDK
 
 It provides **patterns and guarantees**, not product opinions.
 
