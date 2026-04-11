@@ -53,6 +53,7 @@ interface LoadedEntity {
 
 interface LoadedReference {
   sourceStableId: string;
+  sourceSchema: ContinuitySchema;
   targetType: ContinuityEntityType;
   targetId: string;
   relationship: string;
@@ -234,6 +235,7 @@ function loadWorldShardEntities(filePath: string, data: Record<string, unknown>)
   ]);
 
   const worldId = asString(world?.world_id);
+  const worldName = asString(world?.name);
   const shardId = asString(shard?.shard_id);
   const flat: string[] = [];
   flattenStringValues(data, flat);
@@ -248,7 +250,7 @@ function loadWorldShardEntities(filePath: string, data: Record<string, unknown>)
         entityId: worldId,
         schema: "world-shard",
         filePath,
-        label: asString(world?.name) ?? worldId,
+        label: worldName ?? worldId,
         shard: shardId,
         era: detectEra(data),
         tags
@@ -264,7 +266,7 @@ function loadWorldShardEntities(filePath: string, data: Record<string, unknown>)
         entityId: shardId,
         schema: "world-shard",
         filePath,
-        label: asString(world?.name) ? `${asString(world?.name)}:${shardId}` : shardId,
+        label: worldName ? `${worldName}:${shardId}` : shardId,
         shard: shardId,
         era: detectEra(data),
         tags
@@ -300,6 +302,7 @@ function extractReferences(entities: LoadedEntity[], data: Record<string, unknow
       if (!depId) continue;
       refs.push({
         sourceStableId: primarySource.node.stableId,
+        sourceSchema: primarySource.node.schema,
         targetType: "entry",
         targetId: depId,
         relationship: "depends_on",
@@ -318,6 +321,7 @@ function extractReferences(entities: LoadedEntity[], data: Record<string, unknow
     if (ownerType === "player" && ownerId) {
       refs.push({
         sourceStableId: source.node.stableId,
+        sourceSchema: source.node.schema,
         targetType: "player",
         targetId: ownerId,
         relationship: "owned_by",
@@ -330,6 +334,7 @@ function extractReferences(entities: LoadedEntity[], data: Record<string, unknow
     if (worldRef) {
       refs.push({
         sourceStableId: source.node.stableId,
+        sourceSchema: source.node.schema,
         targetType: "world",
         targetId: worldRef,
         relationship: "located_in_world",
@@ -342,6 +347,7 @@ function extractReferences(entities: LoadedEntity[], data: Record<string, unknow
     if (shardRef) {
       refs.push({
         sourceStableId: source.node.stableId,
+        sourceSchema: source.node.schema,
         targetType: "shard",
         targetId: shardRef,
         relationship: "located_in_shard",
@@ -356,6 +362,7 @@ function extractReferences(entities: LoadedEntity[], data: Record<string, unknow
     if (originWorldRef) {
       refs.push({
         sourceStableId: source.node.stableId,
+        sourceSchema: source.node.schema,
         targetType: "world",
         targetId: originWorldRef,
         relationship: "originated_in_world",
@@ -371,6 +378,7 @@ function extractReferences(entities: LoadedEntity[], data: Record<string, unknow
     if (shardEntity && worldEntity) {
       refs.push({
         sourceStableId: shardEntity.node.stableId,
+        sourceSchema: shardEntity.node.schema,
         targetType: "world",
         targetId: worldEntity.node.entityId,
         relationship: "part_of_world",
@@ -461,7 +469,7 @@ export function buildContinuityGraph(rootPath: string): ContinuityGraph {
   for (const ref of refBuffer) {
     const resolvedTargetStable =
       ref.targetType === "entry"
-        ? idToStable.get(ref.targetId) ?? ensureEntryNode(nodes, ref.targetId, ref.filePath, "player-identity").stableId
+        ? idToStable.get(ref.targetId) ?? ensureEntryNode(nodes, ref.targetId, ref.filePath, ref.sourceSchema).stableId
         : idToStable.get(ref.targetId);
     if (!resolvedTargetStable) continue;
 
@@ -596,15 +604,16 @@ export function searchContinuityDocuments(documents: ContinuitySearchDocument[],
 }
 
 export function graphToDot(graph: ContinuityGraph): string {
+  const escapeDotLabel = (value: string): string => value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   const lines: string[] = [];
   lines.push("digraph ContinuityGraph {");
   lines.push("  rankdir=LR;");
   for (const node of graph.nodes) {
-    const safeLabel = `${node.entityType}\\n${node.label}`.replace(/"/g, '\\"');
+    const safeLabel = escapeDotLabel(`${node.entityType}\\n${node.label}`);
     lines.push(`  "${node.stableId}" [label="${safeLabel}"];`);
   }
   for (const edge of graph.edges) {
-    const safeLabel = edge.relationship.replace(/"/g, '\\"');
+    const safeLabel = escapeDotLabel(edge.relationship);
     lines.push(`  "${edge.source}" -> "${edge.target}" [label="${safeLabel}"];`);
   }
   lines.push("}");

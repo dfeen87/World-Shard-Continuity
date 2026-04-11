@@ -45,7 +45,17 @@
 
       function renderTypeFilter() {
         const types = Array.from(new Set(graph.nodes.map((n) => n.entityType))).sort();
-        typeFilter.innerHTML = '<option value="">All types</option>' + types.map((type) => `<option value="${type}">${type}</option>`).join("");
+        typeFilter.innerHTML = "";
+        const allOption = document.createElement("option");
+        allOption.value = "";
+        allOption.textContent = "All types";
+        typeFilter.appendChild(allOption);
+        for (const type of types) {
+          const option = document.createElement("option");
+          option.value = String(type);
+          option.textContent = String(type);
+          typeFilter.appendChild(option);
+        }
       }
 
       function selectedNodeView(node) {
