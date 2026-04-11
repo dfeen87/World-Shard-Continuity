@@ -17,7 +17,11 @@
     "build": "npm run clean && tsc -p tsconfig.json",
 
     "validate": "node dist/cli/validate.js",
+    "search": "node dist/cli/search.js",
+    "graph": "node dist/cli/graph.js",
     "dev:validate": "ts-node src/cli/validate.ts",
+    "dev:search": "ts-node src/cli/search.ts",
+    "dev:graph": "ts-node src/cli/graph.ts",
     "fixtures:validate": "node dist/examples/validate_fixtures.js",
 
     "sim:instance": "node dist/examples/simulate_instance_gate_transition.js",

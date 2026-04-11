@@ -19,6 +19,8 @@ This repository defines how players, assets, and economies move safely and deter
 - [Installation](#installation)
 - [Getting Started (Fast Path)](#getting-started-fast-path)
 - [Continuity Validation](#continuity-validation)
+- [Continuity Search](#continuity-search)
+- [Relationship Graph Export](#relationship-graph-export)
 - [Project Structure](#project-structure)
 - [Related Contracts](#related-contracts)
 - [API Documentation](#api-documentation)
@@ -258,6 +260,84 @@ Recommended pattern:
 2. add rule invocation in `validateContinuityData()`
 3. add unit tests under `tests/continuity/`
 4. add/update CLI integration tests if output/exit behavior changes
+
+## Continuity Search
+
+Search continuity entities (players, assets, worlds, shards) across fixture JSON content:
+
+```bash
+npm run build
+npm run search -- TestPilot
+```
+
+Filter by type, shard/era, tags, and request JSON output:
+
+```bash
+npm run search -- --query AirportCase --type asset --json
+npm run search -- --type shard --tag global_authoritative
+npm run search -- --query DemoWorld --shard sid_DemoShard001
+```
+
+Supported search filters:
+
+- `--type <player|asset|world|shard|entry>` (repeat or comma-separated)
+- `--shard <shard_id>`
+- `--era <era_id>` (when present in data)
+- `--tag <tag>` (repeat or comma-separated)
+- `--json` for structured output
+
+## Relationship Graph Export
+
+Export continuity entities and relationships as a graph:
+
+```bash
+npm run build
+npm run graph -- --out continuity-graph.json
+```
+
+Optional Graphviz DOT export:
+
+```bash
+npm run graph -- --out continuity-graph.json --dot continuity-graph.dot
+```
+
+### Graph JSON Schema
+
+Top-level:
+
+- `rootPath` (string): scanned fixtures root
+- `generatedAt` (ISO timestamp)
+- `nodes` (array)
+- `edges` (array)
+
+Node fields:
+
+- `stableId` (string, stable): `<entityType>:<entityId>`
+- `entityType`: `player | asset | world | shard | entry`
+- `entityId` (string)
+- `schema`: `player-identity | asset-ownership | world-shard`
+- `filePath` (string)
+- `label` (string)
+- `shard` (string | undefined)
+- `era` (string | undefined)
+- `tags` (string[])
+
+Edge fields:
+
+- `edgeId` (string, stable): `<source>|<target>|<relationship>|<path>`
+- `source` (node `stableId`)
+- `target` (node `stableId`)
+- `relationship` (e.g. `owned_by`, `originated_in_world`, `part_of_world`)
+- `path` (source field path)
+- `filePath` (source file)
+
+### Tiny Static Viewer (Optional)
+
+Open `tools/viewer/index.html` in a browser and load an exported `continuity-graph.json` file to:
+
+- list nodes
+- search/filter nodes
+- inspect connected edges for a selected node
 
 ## Project Structure
 

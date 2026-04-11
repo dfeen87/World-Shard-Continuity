@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Continuity Graph Viewer</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 1rem; }
+      input, select { margin: 0.25rem 0.5rem 0.25rem 0; }
+      .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+      ul { list-style: none; padding-left: 0; max-height: 28rem; overflow: auto; border: 1px solid #ddd; }
+      li { padding: 0.4rem; border-bottom: 1px solid #eee; cursor: pointer; }
+      li:hover { background: #f6f6f6; }
+      pre { border: 1px solid #ddd; padding: 0.5rem; max-height: 28rem; overflow: auto; }
+    </style>
+  </head>
+  <body>
+    <h1>Continuity Graph Viewer</h1>
+    <p>Load a <code>continuity-graph.json</code> export, search nodes, and inspect connected edges.</p>
+
+    <input id="fileInput" type="file" accept=".json,application/json" />
+    <input id="searchInput" type="search" placeholder="Search node ID/label/type..." />
+    <select id="typeFilter">
+      <option value="">All types</option>
+    </select>
+
+    <div class="layout">
+      <section>
+        <h2>Nodes</h2>
+        <ul id="nodeList"></ul>
+      </section>
+      <section>
+        <h2>Selection</h2>
+        <pre id="details">Load a graph JSON to begin.</pre>
+      </section>
+    </div>
+
+    <script>
+      let graph = { nodes: [], edges: [] };
+      const fileInput = document.getElementById("fileInput");
+      const searchInput = document.getElementById("searchInput");
+      const typeFilter = document.getElementById("typeFilter");
+      const nodeList = document.getElementById("nodeList");
+      const details = document.getElementById("details");
+
+      function renderTypeFilter() {
+        const types = Array.from(new Set(graph.nodes.map((n) => n.entityType))).sort();
+        typeFilter.innerHTML = '<option value="">All types</option>' + types.map((type) => `<option value="${type}">${type}</option>`).join("");
+      }
+
+      function selectedNodeView(node) {
+        const connected = graph.edges.filter((edge) => edge.source === node.stableId || edge.target === node.stableId);
+        return JSON.stringify({ node, connectedEdges: connected }, null, 2);
+      }
+
+      function renderNodes() {
+        const term = (searchInput.value || "").toLowerCase().trim();
+        const type = typeFilter.value;
+        const nodes = graph.nodes.filter((node) => {
+          if (type && node.entityType !== type) return false;
+          if (!term) return true;
+          return (
+            String(node.stableId).toLowerCase().includes(term) ||
+            String(node.label).toLowerCase().includes(term) ||
+            String(node.entityId).toLowerCase().includes(term)
+          );
+        });
+
+        nodeList.innerHTML = "";
+        for (const node of nodes) {
+          const item = document.createElement("li");
+          item.textContent = `${node.entityType} • ${node.label} (${node.entityId})`;
+          item.onclick = () => {
+            details.textContent = selectedNodeView(node);
+          };
+          nodeList.appendChild(item);
+        }
+        if (nodes.length === 0) {
+          const item = document.createElement("li");
+          item.textContent = "No nodes match current filters.";
+          item.style.cursor = "default";
+          nodeList.appendChild(item);
+        }
+      }
+
+      fileInput.addEventListener("change", async () => {
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) return;
+        const text = await file.text();
+        graph = JSON.parse(text);
+        details.textContent = `Loaded ${graph.nodes.length} nodes and ${graph.edges.length} edges.`;
+        renderTypeFilter();
+        renderNodes();
+      });
+
+      searchInput.addEventListener("input", renderNodes);
+      typeFilter.addEventListener("change", renderNodes);
+    </script>
+  </body>
+</html>
