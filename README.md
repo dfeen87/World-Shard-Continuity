@@ -18,6 +18,7 @@ This repository defines how players, assets, and economies move safely and deter
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Getting Started (Fast Path)](#getting-started-fast-path)
+- [Continuity Validation](#continuity-validation)
 - [Project Structure](#project-structure)
 - [Related Contracts](#related-contracts)
 - [API Documentation](#api-documentation)
@@ -212,6 +213,52 @@ To run all CI checks locally:
 npm run ci
 ```
 
+## Continuity Validation
+
+Run continuity data validation locally:
+
+```bash
+npm run build
+npm run validate -- --root examples/fixtures
+```
+
+Machine-readable output:
+
+```bash
+npm run validate -- --root examples/fixtures --json
+```
+
+### Exit Codes
+
+- `0` = no validation errors
+- `1` = validation errors found
+- `2` = fatal execution error (usage/runtime exception)
+
+### Output Interpretation
+
+The validator reports grouped results for:
+
+- duplicate IDs
+- missing required fields
+- broken references
+- timeline ordering violations
+- schema violations
+- parse errors
+- warnings (for skipped/unknown folders)
+
+### Add New Rules
+
+Add or extend rule functions in:
+
+- `src/continuity/validator.ts`
+
+Recommended pattern:
+
+1. implement a pure rule function that returns `ValidationIssue[]`
+2. add rule invocation in `validateContinuityData()`
+3. add unit tests under `tests/continuity/`
+4. add/update CLI integration tests if output/exit behavior changes
+
 ## Project Structure
 
 ```
@@ -329,6 +376,7 @@ Contributions are welcome! This project values:
 npm run typecheck  # Verify TypeScript types
 npm run build      # Ensure clean build
 npm run test       # Run contract tests
+npm run validate -- --root examples/fixtures
 npm run sim:all    # Validate simulations
 ```
 

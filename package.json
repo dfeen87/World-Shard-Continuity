@@ -29,7 +29,7 @@
     "sim:quick": "npm run sim:idemp",
 
     "sim:all": "npm run sim:instance && npm run sim:mm && npm run sim:idemp",
-    "test": "node --test --loader ts-node/esm/transpile-only tests/contracts/transition_store.contract.test.ts",
+    "test": "node --test --loader ts-node/esm/transpile-only tests",
     "ci": "npm run typecheck && npm run build && npm run fixtures:validate && npm run sim:all && npm run test"
   },
   "dependencies": {
