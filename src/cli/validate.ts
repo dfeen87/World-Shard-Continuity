@@ -9,7 +9,7 @@ interface CliOptions {
   json: boolean;
 }
 
-function usage(): void {
+function usage(): never {
   console.error("Usage: npm run validate -- [--root <path>] [--json]");
   console.error("Defaults:");
   console.error("  --root examples/fixtures");

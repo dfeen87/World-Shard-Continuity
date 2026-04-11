@@ -16,23 +16,24 @@ export interface ContinuityReference {
   targetId: string;
   filePath: string;
   path: string;
-  entryId?: string;
+  // ID of the containing entry when available.
+  entryId: string | undefined;
 }
 
 export interface ContinuityTimelineNode {
   id: string;
   filePath: string;
-  date?: string;
-  updatedDate?: string;
+  date: string | undefined;
+  updatedDate: string | undefined;
   dependencies: string[];
 }
 
 export interface ValidationIssue {
   code: string;
   message: string;
-  filePath?: string;
-  path?: string;
-  entryId?: string;
+  filePath: string | undefined;
+  path: string | undefined;
+  entryId: string | undefined;
 }
 
 export interface ContinuityValidationReport {
@@ -62,9 +63,9 @@ interface LoadedEntry {
 }
 
 interface ParsedArgs {
-  id?: string;
-  date?: string;
-  updatedDate?: string;
+  id: string | undefined;
+  date: string | undefined;
+  updatedDate: string | undefined;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -193,17 +194,6 @@ function collectReferences(
   }));
 
   if (schema === "player-identity") {
-    const social = isRecord(data.social) ? data.social : undefined;
-    const friends = social ? asStringArray(social.friends) : [];
-    for (const friendId of friends) {
-      refs.push({
-        targetType: "player",
-        targetId: friendId,
-        filePath,
-        path: "social.friends",
-        entryId
-      });
-    }
     return refs;
   }
 
@@ -309,6 +299,7 @@ export function detectTimelineViolations(
         code: "TIMELINE_SELF_ORDER",
         message: "Updated timestamp is earlier than created timestamp.",
         filePath: node.filePath,
+        path: undefined,
         entryId: node.id
       });
     }
@@ -322,6 +313,7 @@ export function detectTimelineViolations(
           code: "TIMELINE_DEPENDENCY_ORDER",
           message: `Dependency '${depId}' is dated after dependent entry.`,
           filePath: node.filePath,
+          path: undefined,
           entryId: node.id
         });
       }
@@ -417,7 +409,9 @@ export function validateContinuityData(rootPath: string): ContinuityValidationRe
       report.groups.warnings.push({
         code: "UNKNOWN_SCHEMA_FOLDER",
         message: "JSON file is outside known schema folders and was skipped.",
-        filePath
+        filePath,
+        path: undefined,
+        entryId: undefined
       });
       continue;
     }
@@ -429,7 +423,9 @@ export function validateContinuityData(rootPath: string): ContinuityValidationRe
       report.groups.parse_errors.push({
         code: "JSON_PARSE_ERROR",
         message: err instanceof Error ? err.message : "Invalid JSON",
-        filePath
+        filePath,
+        path: undefined,
+        entryId: undefined
       });
       continue;
     }
@@ -438,7 +434,9 @@ export function validateContinuityData(rootPath: string): ContinuityValidationRe
       report.groups.schema_violations.push({
         code: "SCHEMA_OBJECT_REQUIRED",
         message: "Top-level JSON value must be an object.",
-        filePath
+        filePath,
+        path: undefined,
+        entryId: undefined
       });
       continue;
     }
@@ -451,7 +449,9 @@ export function validateContinuityData(rootPath: string): ContinuityValidationRe
         report.groups.schema_violations.push({
           code: "SCHEMA_VALIDATION_ERROR",
           message: err instanceof Error ? err.message : "Schema validation failed.",
-          filePath
+          filePath,
+          path: undefined,
+          entryId: undefined
         });
       } else {
         for (const ajvErr of ajvErrors) {
@@ -462,7 +462,8 @@ export function validateContinuityData(rootPath: string): ContinuityValidationRe
             code: keyword === "required" ? "MISSING_REQUIRED_FIELD" : "SCHEMA_VIOLATION",
             message,
             filePath,
-            path: instancePath || undefined
+            path: instancePath || undefined,
+            entryId: undefined
           };
           if (keyword === "required") report.groups.missing_required_fields.push(issue);
           else report.groups.schema_violations.push(issue);

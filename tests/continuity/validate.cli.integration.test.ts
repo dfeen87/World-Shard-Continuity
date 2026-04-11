@@ -46,9 +46,8 @@ test("validate CLI succeeds for valid fixture dataset", () => {
 test("validate CLI fails with duplicate IDs", () => {
   const root = createFixtureSet();
   const dupDir = resolve(root, "player-identity");
-  const sample = JSON.parse(readFileSync(resolve(dupDir, "valid.sample.json"), "utf-8")) as Record<string, unknown>;
-  sample.audit = { ...(sample.audit as Record<string, unknown>), last_change_id: "chg_identity_dup_002" };
-  writeFileSync(resolve(dupDir, "dup.sample.json"), JSON.stringify(sample, null, 2), "utf-8");
+  const sample = readFileSync(resolve(dupDir, "valid.sample.json"), "utf-8");
+  writeFileSync(resolve(dupDir, "dup.sample.json"), sample, "utf-8");
 
   const result = spawnSync(
     process.execPath,
