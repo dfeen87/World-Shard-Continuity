@@ -248,6 +248,33 @@ The validator reports grouped results for:
 - parse errors
 - warnings (for skipped/unknown folders)
 
+### Consistency Checks (Current Coverage)
+
+Continuity data fixtures live under:
+
+- `examples/fixtures/player-identity/*.json`
+- `examples/fixtures/asset-ownership/*.json`
+- `examples/fixtures/world-shard/*.json`
+
+Primary identifiers indexed by the validator:
+
+- player: `identity_id`
+- asset: `asset_id`
+- world-shard: `shard.shard_id`
+- world (for references): `world.world_id`
+
+Reference checks currently include:
+
+- asset owner player lookup: `owner.owner_id` when `owner.owner_type=player`
+- `world_ref`, `shard_ref`, and `lifecycle.origin.origin_world_ref`
+- generic dependency arrays when present: `predecessors`, `dependencies`, `depends_on`
+
+Timeline date fields used for ordering checks:
+
+- player: `created_at` / `updated_at`
+- asset: `lifecycle.created_at` / `lifecycle.updated_at`
+- world-shard: `health.last_heartbeat_at` / `audit.last_changed_at`
+
 ### Add New Rules
 
 Add or extend rule functions in:
@@ -343,6 +370,7 @@ Open `tools/viewer/index.html` in a browser and load an exported `continuity-gra
 
 ```
 World-Shard-Continuity/
+├── .github/workflows/         # CI and fixture validation workflows
 ├── contracts/              # Formal continuity contracts
 │   ├── economy-persistence.contract.md
 │   ├── identity-persistence.contract.md
@@ -354,6 +382,11 @@ World-Shard-Continuity/
 │   ├── economy-continuity.md
 │   └── narrative-timeline-layering.md
 ├── examples/               # Example fixtures and demonstrations
+│   ├── fixtures/
+│   │   ├── asset-ownership/
+│   │   ├── player-identity/
+│   │   └── world-shard/
+│   └── engine-agnostic.md
 ├── reference-architectures/ # Production-grade transition patterns
 │   ├── airport-terminal-transition.md
 │   ├── instance-gate-transition.md
@@ -365,11 +398,16 @@ World-Shard-Continuity/
 │   ├── player-identity.schema.json
 │   └── world-shard.schema.json
 ├── src/                    # Core implementation
-│   ├── core/              # Transition execution engine
-│   ├── transitions/       # Transition controllers and FSM
-│   ├── economy/           # Escrow and economic guarantees
-│   ├── identity/          # Identity persistence
-│   └── adapters/          # Persistence adapters
+│   ├── continuity/         # Validation, search indexing, graph building
+│   ├── core/               # Transition execution engine
+│   ├── transitions/        # Transition controllers and FSM
+│   ├── economy/            # Escrow and economic guarantees
+│   ├── identity/           # Identity persistence
+│   ├── cli/                # validate/search/graph commands
+│   ├── examples/           # runnable transition/idempotency demos
+│   └── adapters/           # Persistence adapters
+├── sim/adversarial/        # Adversarial simulation scenarios
+├── tools/viewer/           # Static graph viewer
 └── tests/                  # Contract tests
 
 ```
