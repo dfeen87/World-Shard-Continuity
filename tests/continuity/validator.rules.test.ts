@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  collectDependencyRefs,
   detectBrokenReferences,
   detectDuplicateIds,
   detectTimelineViolations,
@@ -63,4 +64,17 @@ test("detectTimelineViolations enforces dependency ordering", () => {
   const issues = detectTimelineViolations(nodes, byId);
   assert.equal(issues.length, 1);
   assert.equal(issues[0]?.code, "TIMELINE_DEPENDENCY_ORDER");
+});
+
+test("collectDependencyRefs collects all supported dependency arrays", () => {
+  const refs = collectDependencyRefs({
+    predecessors: ["a1", { id: "a2" }],
+    dependencies: [{ ref: "b1" }],
+    depends_on: [{ dependency_id: "c1" }, "c2"]
+  });
+
+  assert.deepEqual(
+    refs.map((ref) => `${ref.path}:${ref.targetId}`),
+    ["predecessors:a1", "predecessors:a2", "dependencies:b1", "depends_on:c1", "depends_on:c2"]
+  );
 });

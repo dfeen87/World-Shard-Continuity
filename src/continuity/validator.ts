@@ -68,6 +68,11 @@ interface ParsedArgs {
   updatedDate: string | undefined;
 }
 
+export interface GenericDependencyRef {
+  targetId: string;
+  path: string;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -101,23 +106,22 @@ function schemaFromPath(fixturesRoot: string, filePath: string): SchemaName | nu
   return null;
 }
 
-function firstDependencyArray(data: Record<string, unknown>): string[] {
+export function collectDependencyRefs(data: Record<string, unknown>): GenericDependencyRef[] {
   const keys = ["predecessors", "dependencies", "depends_on"];
+  const refs: GenericDependencyRef[] = [];
   for (const key of keys) {
     const raw = data[key];
     if (Array.isArray(raw)) {
-      const ids: string[] = [];
       for (const item of raw) {
-        if (typeof item === "string") ids.push(item);
+        if (typeof item === "string") refs.push({ targetId: item, path: key });
         else if (isRecord(item)) {
           const id = asString(item.id) ?? asString(item.ref) ?? asString(item.dependency_id);
-          if (id) ids.push(id);
+          if (id) refs.push({ targetId: id, path: key });
         }
       }
-      return ids;
     }
   }
-  return [];
+  return refs;
 }
 
 function parsePlayerIdentity(data: Record<string, unknown>): ParsedArgs {
@@ -183,13 +187,13 @@ function collectReferences(
   filePath: string,
   data: Record<string, unknown>,
   entryId: string | undefined,
-  dependencies: string[]
+  dependencies: GenericDependencyRef[]
 ): ContinuityReference[] {
   const refs: ContinuityReference[] = dependencies.map((d) => ({
     targetType: "entry",
-    targetId: d,
+    targetId: d.targetId,
     filePath,
-    path: "dependencies",
+    path: d.path,
     entryId
   }));
 
@@ -472,7 +476,7 @@ export function validateContinuityData(rootPath: string): ContinuityValidationRe
       continue;
     }
 
-    const deps = firstDependencyArray(data);
+    const deps = collectDependencyRefs(data);
     const parsed = parseEntryBySchema(schema, data);
     const identifiers = collectIdentifiers(schema, filePath, data, parsed);
     const entryId = parsed.id;
@@ -482,7 +486,7 @@ export function validateContinuityData(rootPath: string): ContinuityValidationRe
       filePath,
       date: parsed.date,
       updatedDate: parsed.updatedDate,
-      dependencies: deps
+      dependencies: deps.map((dep) => dep.targetId)
     };
 
     entries.push({ filePath, schema, data, identifiers, references, timeline });
