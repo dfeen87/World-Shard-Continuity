@@ -546,11 +546,14 @@ I would like to acknowledge **Microsoft Copilot**, **Anthropic Claude**, and **O
 
 ## License
 
-This repository uses a **hybrid license model**. It is freely available for **non‑commercial, evaluation, and research use** under the terms of the included LICENSE file.
+This repository is **100% open-source under the MIT License**.
 
-A **commercial license** is required for production integration, revenue-generating projects, or enterprise use. Please refer to the `LICENSE` file for details on commercial potential and contact information.
+You may use, modify, distribute, and sublicense this project under the terms of the [MIT License](LICENSE).
 
 ---
+
+## Enterprise Consulting & Integration
+This architecture is fully open-source under the MIT License. If your organization requires custom scaling, proprietary integration, or dedicated technical consulting to deploy these models at an enterprise level, please reach out at: dfeen87@gmail.com
 
 ## Final Note
 
