@@ -1,5 +1,6 @@
 # World-Shard Continuity
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/dfeen87/World-Shard-Continuity/actions/workflows/ci.yml/badge.svg)](https://github.com/dfeen87/World-Shard-Continuity/actions/workflows/ci.yml)
 
 A reference architecture and execution model for identity-safe, asset-safe, long-lived game worlds.
