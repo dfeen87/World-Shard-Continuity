@@ -31,7 +31,7 @@
     "asset_class": {
       "type": "string",
       "enum": ["currency", "item", "vehicle", "property", "entitlement", "reputation", "other"],
-      "description": "High-level asset classification."
+      "description": "High-level asset classification. Currency is a game-only asset class; the schema does not define real-money exchange, monetization, or external value."
     },
 
     "asset_type": {
@@ -85,7 +85,7 @@
         "quantity": {
           "type": "number",
           "minimum": 0,
-          "description": "For fungible assets. For non-fungible assets, omit or set to 1."
+          "description": "For fungible game assets. Currency quantity changes must be reconciled by continuity-authorized economic events through the ledger, not applied directly from transition metadata."
         },
         "durability": {
           "type": "number",

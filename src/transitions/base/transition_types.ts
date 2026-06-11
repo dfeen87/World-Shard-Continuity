@@ -1,3 +1,5 @@
+import type { EconomicEvent } from "../../economy/types.js";
+
 export type TransitionKind =
   | "airport_terminal"
   | "instance_gate"
@@ -24,5 +26,17 @@ export interface TransitionOutcome {
   // Optional: for match/instance resolution (not required at begin)
   granted_assets?: string[];
   consumed_assets?: string[];
+  /**
+   * Typed game-only economic deltas to reconcile through EconomyLedger.mutate().
+   * This field is a placeholder for future continuity-authorized currency
+   * handling; it is not a payment system, monetization layer, real-money wallet,
+   * or compliance-ready ledger.
+   */
+  economic_events?: EconomicEvent[];
+
+  /**
+   * @deprecated Use economic_events. This scalar is retained only for backward
+   * compatibility and must never be treated as authoritative.
+   */
   currency_delta?: number;
 }

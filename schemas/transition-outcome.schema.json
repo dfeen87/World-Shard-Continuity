@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/world-shard-continuity/schemas/transition-outcome.schema.json",
+  "title": "TransitionOutcome",
+  "description": "Outcome of a continuity-layer transition. Game-only currency changes are represented as economic_events and must be routed through EconomyLedger.mutate(); deprecated currency_delta values are non-authoritative compatibility metadata only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["success"],
+  "properties": {
+    "success": { "type": "boolean" },
+    "flags": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 128 }
+    },
+    "failure_reason": { "type": "string", "maxLength": 512 },
+    "transition_id": { "type": "string", "maxLength": 128 },
+    "granted_assets": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^aid_[A-Za-z0-9_-]{16,80}$" }
+    },
+    "consumed_assets": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^aid_[A-Za-z0-9_-]{16,80}$" }
+    },
+    "economic_events": {
+      "type": "array",
+      "description": "Typed game-only economic deltas to reconcile through the ledger; not applied directly by consumers.",
+      "items": { "$ref": "economic-event.schema.json" }
+    },
+    "currency_delta": {
+      "type": "number",
+      "deprecated": true,
+      "description": "Deprecated compatibility field. It must never be treated as authoritative; use economic_events."
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/world-shard-continuity/schemas/economic-event.schema.json",
+  "title": "EconomicEvent",
+  "description": "Placeholder event for typed, auditable game-only currency deltas. Economic events must be reconciled through the continuity ledger and do not implement real-money exchange, monetization, pricing, or external value.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["asset_id", "amount", "reason", "change_id", "timestamp"],
+  "properties": {
+    "asset_id": {
+      "type": "string",
+      "pattern": "^aid_[A-Za-z0-9_-]{16,80}$",
+      "description": "Game-only currency asset to mutate through EconomyLedger.mutate()."
+    },
+    "amount": {
+      "type": "number",
+      "description": "Signed in-game quantity delta. This is not external value data."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Implementation-defined gameplay reason for the delta."
+    },
+    "change_id": {
+      "type": "string",
+      "minLength": 6,
+      "maxLength": 128,
+      "description": "Idempotency key used by the ledger mutation path."
+    },
+    "timestamp": {
+      "type": "number",
+      "description": "Producer timestamp in epoch milliseconds for audit correlation."
+    }
+  }
+}

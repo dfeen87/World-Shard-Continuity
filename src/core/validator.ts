@@ -9,7 +9,9 @@ import { ValidationError } from "./errors.js";
 export type SchemaName =
   | "player-identity"
   | "asset-ownership"
-  | "world-shard";
+  | "world-shard"
+  | "economic-event"
+  | "transition-outcome";
 
 export class SchemaRegistry {
   private ajv: Ajv2020;
@@ -24,17 +26,22 @@ export class SchemaRegistry {
     });
     addFormats(this.ajv);
 
-    // Important: schemas reference only internal defs, so we can compile directly.
+    // Important: schemas reference only internal defs or schemas compiled first.
     this.load("player-identity", "player-identity.schema.json");
     this.load("asset-ownership", "asset-ownership.schema.json");
     this.load("world-shard", "world-shard.schema.json");
+    this.load("economic-event", "economic-event.schema.json");
+    this.load("transition-outcome", "transition-outcome.schema.json");
+  }
+
+  private readSchema(filename: string): object {
+    const p = resolve(this.schemaDirAbs, filename);
+    const raw = readFileSync(p, "utf-8");
+    return JSON.parse(raw) as object;
   }
 
   private load(name: SchemaName, filename: string): void {
-    const p = resolve(this.schemaDirAbs, filename);
-    const raw = readFileSync(p, "utf-8");
-    const schema = JSON.parse(raw) as object;
-    const validate = this.ajv.compile(schema);
+    const validate = this.ajv.compile(this.readSchema(filename));
     this.validators.set(name, validate);
   }
 

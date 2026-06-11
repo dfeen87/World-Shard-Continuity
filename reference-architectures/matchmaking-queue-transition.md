@@ -157,7 +157,15 @@ Example:
   "rating_delta": +24,
   "granted_assets": ["aid_reward_001"],
   "consumed_assets": [],
-  "currency_delta": 100,
+  "economic_events": [
+    {
+      "asset_id": "aid_gamecurrency_example",
+      "amount": 100,
+      "reason": "match_completion_reward",
+      "change_id": "chg_match_reward_001",
+      "timestamp": 1730000000000
+    }
+  ],
   "flags": ["clean_match"]
 }
 ```
