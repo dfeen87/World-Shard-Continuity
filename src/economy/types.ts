@@ -54,17 +54,53 @@ export interface AssetOwnershipRecord {
 }
 
 /**
+ * Semantic hint for EconomicEvent.amount.
+ *
+ * Invariant: producers should emit a finite amount greater than 0 for each
+ * event and use event direction or asset-specific reconciliation policy outside
+ * this placeholder type when a future contract needs richer semantics. This is
+ * intentionally a number alias rather than a branded type to avoid breaking
+ * existing callers.
+ */
+export type PositiveEconomicAmount = number;
+
+/**
+ * Semantic hint for EconomicEvent.reason.
+ *
+ * Invariant: reason should be a non-empty, human-auditable continuity reason.
+ * This remains a string alias so existing string values stay source-compatible.
+ */
+export type NonEmptyEconomicReason = string;
+
+/**
+ * Semantic hint for EconomicEvent.change_id.
+ *
+ * Invariant: change_id should be unique per EconomicEvent and stable across
+ * retries so ledger-routed reconciliation can remain idempotent. This remains a
+ * string alias to avoid introducing a breaking branded-type requirement.
+ */
+export type UniqueEconomicChangeId = string;
+
+/**
  * Placeholder event for game-only currency quantity changes.
  *
  * This is a typed, auditable delta that must be reconciled through
  * EconomyLedger.mutate() by the continuity layer. It is not a payment system,
  * monetization layer, real-money wallet, or compliance-ready ledger.
+ *
+ * Type-level invariants for future implementations:
+ * - amount should be finite and greater than 0;
+ * - reason should be a non-empty string;
+ * - change_id should be unique per event and stable for retries.
+ *
+ * These invariants are documented as comments and semantic aliases only; this
+ * placeholder does not add runtime enforcement or change existing behavior.
  */
 export interface EconomicEvent {
   asset_id: string;
-  amount: number;
-  reason: string;
-  change_id: string;
+  amount: PositiveEconomicAmount;
+  reason: NonEmptyEconomicReason;
+  change_id: UniqueEconomicChangeId;
   timestamp: number;
 }
 

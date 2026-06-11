@@ -6,6 +6,7 @@ export * from "./core/validator.js";
 export * from "./identity/types.js";
 export * from "./identity/store.js";
 export * from "./identity/in_memory_store.js";
+export * from "./identity/global_asset_identity.js";
 
 export * from "./economy/types.js";
 export * from "./economy/ledger.js";
