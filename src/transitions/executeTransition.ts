@@ -85,7 +85,10 @@ export async function executeTransition(
         throw new ValidationError("begin requires a strong change_id (>= 6 chars).");
       }
 
-      // API-level idempotency (pre-controller)
+      // API-level idempotency (pre-controller).
+      // TODO(high-scale): Place API-gateway or regional edge caches in front of
+      // this lookup only when they preserve strict request_id -> transition_id
+      // binding and cannot replay stale authority across regions.
       const existingTid = await idempotency.get(input.request.kind, input.request_id);
       if (existingTid) {
         const transition = await ctx.fsm.getStore().get(existingTid);

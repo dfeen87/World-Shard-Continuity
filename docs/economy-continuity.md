@@ -91,6 +91,7 @@ Guardrails for contributors:
 * This is not a payment system.
 * This is not a monetization layer.
 * This is not a real-money wallet.
+* This is not a marketplace.
 * This is not a compliance-ready ledger.
 * `currency_delta` is deprecated compatibility metadata and must never be treated as authoritative.
 * Economic events must be reconciled through `EconomyLedger.mutate()` after continuity-layer confirmation; consumers must not apply them directly.
@@ -99,6 +100,12 @@ Guardrails for contributors:
 ### Future placeholder
 
 TODO: Introduce an `EconomicAuthorityService` to centralize balances, sources, sinks, and typed in-game mutations. Do not implement those responsibilities in transition controllers; controllers should continue emitting only continuity-scoped outcomes.
+
+## High-Scale Continuity Notes
+
+At high mutation volume, the continuity layer should remain a contract boundary rather than an economy implementation. Production deployments may add caches, batch writers, stream processors, or regional workers around the ledger interface, but they must preserve atomicity, idempotency, auditability, and game-only semantics. Same-asset or same-identity mutations require pessimistic authority or equivalent serialization; independent assets may use optimistic concurrency and batching when ordering is not significant.
+
+See [High-Scale Testing Strategy](./high-scale-testing.md) for load, failover, rollback-storm, and idempotency scenarios.
 
 ## Transactional Integrity
 
