@@ -21,7 +21,7 @@ The economy is a platform-level system, not a world feature.
 ### Worlds may
 
 * Reference balances
-* Price goods
+* Read game-defined costs and availability
 * Apply local modifiers
 
 ### Worlds must not
@@ -69,6 +69,36 @@ When assets move between worlds:
 * Transfer rules must be deterministic
 
 Transfer eligibility must be validated prior to transition.
+
+## Game-Only Currency Events
+
+Currency remains a game-only `AssetClass` with a ledger-managed quantity. The continuity layer now represents currency changes as typed `EconomicEvent` entries instead of authoritative scalar deltas on a transition outcome.
+
+An `EconomicEvent` is intentionally only a placeholder for auditable in-game deltas:
+
+```ts
+interface EconomicEvent {
+  asset_id: string
+  amount: number
+  reason: string
+  change_id: string
+  timestamp: number
+}
+```
+
+Guardrails for contributors:
+
+* This is not a payment system.
+* This is not a monetization layer.
+* This is not a real-money wallet.
+* This is not a compliance-ready ledger.
+* `currency_delta` is deprecated compatibility metadata and must never be treated as authoritative.
+* Economic events must be reconciled through `EconomyLedger.mutate()` after continuity-layer confirmation; consumers must not apply them directly.
+* Economic events do not define exchange, external value, balancing formulas, or monetization behavior.
+
+### Future placeholder
+
+TODO: Introduce an `EconomicAuthorityService` to centralize balances, sources, sinks, and typed in-game mutations. Do not implement those responsibilities in transition controllers; controllers should continue emitting only continuity-scoped outcomes.
 
 ## Transactional Integrity
 
@@ -127,6 +157,7 @@ Economic activity must be observable.
 * Transfer
 * Modification
 * Destruction
+* Economic event reconciliation through the ledger
 
 Logs must support forensic analysis and dispute resolution.
 

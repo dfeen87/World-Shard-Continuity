@@ -76,6 +76,20 @@ This allows:
 * Hybrid engine platforms
 * Incremental adoption in legacy systems
 
+## Economic Event Schema Guardrails
+
+`schemas/economic-event.schema.json` and the `economic_events` field on `schemas/transition-outcome.schema.json` are placeholders for typed, auditable game-only currency mutations.
+
+When adapting these schemas:
+
+* Treat `currency` as an in-game asset class with ledger-owned quantity.
+* Route `economic_events` through `EconomyLedger.mutate()` or an equivalent continuity-authorized ledger mutation path.
+* Do not let clients, shards, or transition metadata apply currency quantities directly.
+* Treat deprecated `currency_delta` as non-authoritative compatibility metadata only.
+* Do not add real-money exchange, monetization, external value, pricing formulas, or compliance behavior to these schemas.
+
+The event schema is deliberately not double-entry accounting and deliberately not a complete economic authority. Future balance, source, sink, and typed mutation logic should live behind a continuity-layer authority service rather than in transition consumers.
+
 ## Backward and Forward Compatibility
 
 Each schema includes a `schema_version` field.

@@ -10,6 +10,7 @@ export * from "./identity/in_memory_store.js";
 export * from "./economy/types.js";
 export * from "./economy/ledger.js";
 export * from "./economy/in_memory_ledger.js";
+export * from "./economy/economic_events.js";
 export * from "./economy/escrow.js";
 
 export * from "./core/transition/types.js";

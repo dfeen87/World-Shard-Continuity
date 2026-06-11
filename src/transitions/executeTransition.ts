@@ -4,6 +4,7 @@ import type { TransitionContext } from "./base/transition_context.js";
 import type { ShardTransition } from "../core/transition/types.js";
 import type { RequestIdempotencyStore } from "./requestIdempotencyStore.js";
 import { TransitionError, ValidationError } from "../core/errors.js";
+import { applyEconomicEvents } from "../economy/economic_events.js";
 
 export type ExecuteAction = "begin" | "confirm" | "rollback";
 
@@ -145,6 +146,10 @@ export async function executeTransition(
 
     if (input.action === "confirm") {
       const t = await ctx.fsm.confirm(ctx.actor, input.transition_id, input.change_id);
+      // Economic events are game-only deltas and are authoritative only after
+      // the continuity layer confirms the transition and routes them through
+      // EconomyLedger.mutate(). Deprecated currency_delta values are ignored.
+      await applyEconomicEvents(ctx.ledger, input.outcome?.economic_events);
       const result: ExecuteTransitionResult = input.outcome
         ? { action: "confirm", kind: input.kind, transition: t, outcome: input.outcome }
         : { action: "confirm", kind: input.kind, transition: t };

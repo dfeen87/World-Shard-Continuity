@@ -177,7 +177,15 @@ Only the Outcome Summary may mutate global economy:
   "identity_id": "pid_...",
   "granted_assets": ["aid_..."],
   "consumed_assets": ["aid_..."],
-  "currency_delta": 250,
+  "economic_events": [
+    {
+      "asset_id": "aid_gamecurrency_example",
+      "amount": 250,
+      "reason": "instance_completion_reward",
+      "change_id": "chg_instance_reward_001",
+      "timestamp": 1730000000000
+    }
+  ],
   "flags": ["victory", "clean_run"]
 }
 ```

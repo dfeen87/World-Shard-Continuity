@@ -46,6 +46,7 @@ async function main() {
 
   // Seed a protected asset (e.g., equipped weapon that must not dupe)
   const aid = newId("aid", 16);
+  const currencyAid = newId("aid", 16);
   ledger.seed({
     schema_version: "1.0.0",
     asset_id: aid,
@@ -60,10 +61,28 @@ async function main() {
     audit: { change_log_ref: "memory://audit", last_change_id: "seed" }
   });
 
+  // Game-only currency is still an AssetOwnershipRecord. Match rewards are
+  // reconciled through EconomicEvent -> EconomyLedger.mutate(), never by a
+  // scalar transition field.
+  ledger.seed({
+    schema_version: "1.0.0",
+    asset_id: currencyAid,
+    asset_class: "currency",
+    asset_type: "match_points",
+    scope: "global",
+    owner: { owner_type: "player", owner_id: pid },
+    state: { status: "active", quantity: 0, attributes: { label: "MatchPoints" } },
+    lifecycle: { created_at: new Date().toISOString(), origin: { origin_type: "grant", origin_ref: "seed" } },
+    transfer_policy: { transferable: false, transfer_scope: "none", requires_escrow: false },
+    integrity: { idempotency_key: newId("tx", 12), version: 1 },
+    audit: { change_log_ref: "memory://audit", last_change_id: "seed" }
+  });
+
   const match_id = `mid_${Date.now()}`;
   console.log(`Identity=${pid}`);
   console.log(`Match=${match_id}`);
   console.log(`Asset=${aid}`);
+  console.log(`CurrencyAsset=${currencyAid}`);
 
   // Begin matchmaking transition (prepare+commit)
   const kind: TransitionKind = "matchmaking_queue";
@@ -95,13 +114,26 @@ async function main() {
     kind,
     transition_id,
     change_id: "chg_mm_confirm_001",
-    outcome: { success: true, flags: ["win"], currency_delta: 100 }
+    outcome: {
+      success: true,
+      flags: ["win"],
+      economic_events: [{
+        asset_id: currencyAid,
+        amount: 100,
+        reason: "match_win_reward",
+        change_id: "chg_mm_reward_001",
+        timestamp: Date.now()
+      }]
+    }
   });
 
   assert(confirm.transition?.status === "confirmed", "Match transition should confirm.");
 
   const afterConfirm = await ledger.get(aid);
   assert(afterConfirm?.state.status === "active", "Asset should be active after confirm.");
+
+  const afterCurrency = await ledger.get(currencyAid);
+  assert(afterCurrency?.state.quantity === 100, "Currency event should be applied through ledger mutation.");
 
   console.log("Matchmaking simulation complete ✅");
 }

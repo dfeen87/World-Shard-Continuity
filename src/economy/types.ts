@@ -53,6 +53,21 @@ export interface AssetOwnershipRecord {
   };
 }
 
+/**
+ * Placeholder event for game-only currency quantity changes.
+ *
+ * This is a typed, auditable delta that must be reconciled through
+ * EconomyLedger.mutate() by the continuity layer. It is not a payment system,
+ * monetization layer, real-money wallet, or compliance-ready ledger.
+ */
+export interface EconomicEvent {
+  asset_id: string;
+  amount: number;
+  reason: string;
+  change_id: string;
+  timestamp: number;
+}
+
 export interface EscrowRecord {
   escrow_id: string;
   asset_id: string;
