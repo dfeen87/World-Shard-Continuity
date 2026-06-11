@@ -70,6 +70,54 @@ This contract does not prescribe engine, network, or storage implementations.
   * Outcome
 * Logs must support replay and forensic analysis.
 
+
+## Transition FSM Invariants
+
+The continuity FSM has exactly four lifecycle states and this document adds no new states:
+
+* `prepared` means source authority has reserved the transition and protected assets are held.
+* `committed` means destination authority has accepted the handoff, but rollback remains possible.
+* `confirmed` means the destination is authoritative and the transition is irreversible.
+* `rolled_back` means source authority is restored and protected assets are released.
+
+Required invariants:
+
+* A transition must never skip directly from `prepared` to `confirmed`.
+* A `confirmed` transition must never be rolled back.
+* A `rolled_back` transition must not be recommitted; a new attempt needs a new transition and change IDs.
+* Protected assets must be reserved before a transition record is exposed as prepared.
+* Escrow release must be safe to retry because confirm and rollback calls can be replayed after timeouts.
+* Audit records must be emitted for every successful lifecycle mutation.
+
+## Idempotency Boundaries
+
+The continuity layer uses two separate idempotency scopes:
+
+* Request idempotency binds a client-stable request ID to a transition ID before controller execution.
+* FSM idempotency binds a mutation change ID to prepare, commit, confirm, or rollback.
+
+These boundaries must not be merged. Request IDs prevent duplicate transition creation, while change IDs prevent duplicate lifecycle mutations. Game-only economic reconciliation must provide its own idempotent change IDs and must not rely on deprecated scalar currency metadata.
+
+## Concurrency and Failure Modes
+
+Concurrent workers may observe retries, duplicate submits, partial writes, delayed audit sinks, and regional failover. Implementations must treat the transition store as the authority for lifecycle status and must make lifecycle updates atomic. Optimistic concurrency is appropriate for single-transition status updates when version checks are available. Pessimistic locking or equivalent escrow authority is required for protected assets and identities that cannot be transferred concurrently.
+
+Expected failure modes include:
+
+* Prepare succeeds but the caller times out: retry prepare with the same change ID.
+* Destination accepts arrival but commit times out: retry commit with the same change ID.
+* Confirmation applies but audit is delayed: do not roll back; retry audit or rebuild from transition state.
+* Regional rollback storm: batch operational work by shard or region, but preserve per-transition idempotency and audit order.
+* Store conflict on stale version: reload authoritative state and retry only when the desired lifecycle transition is still valid.
+
+## Distributed Deployment Considerations
+
+Large deployments should keep routing, matchmaking, placement, cache invalidation, and shard admission control outside the FSM. The FSM should receive explicit source and destination shard IDs and deterministic change IDs. Shard metadata registries may be cached for reads, but lifecycle transitions such as active-to-draining-to-retired require authoritative writes and should be guarded by distributed locks or compare-and-swap semantics in production.
+
+## Monetization and Real-Money Guardrails
+
+Shard transition continuity is not a payment system, wallet, marketplace, real-money ledger, or compliance-ready financial system. Transition records may protect game-only assets during handoff, but they must never encode external value, real-money settlement, monetization policy, marketplace exchange, or payment authorization.
+
 ## Optional Enhancements
 
 The following are recommended but not mandatory:

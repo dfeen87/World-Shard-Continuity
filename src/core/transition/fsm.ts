@@ -21,6 +21,18 @@ import { ConflictError, ValidationError } from "../errors.js";
  * - All state changes are audited
  * - All economy movement flows through escrow
  * - Idempotency is enforced at the FSM boundary
+ * - Prepared and committed transitions are reversible; confirmed transitions are not
+ *
+ * High-scale invariants:
+ * - Exactly one lifecycle mutation should win for a transition/change_id pair.
+ * - Stores must make update() atomic and reject conflicting concurrent writes.
+ * - Escrow release must be idempotent because rollback and confirm retries can race
+ *   during regional failover or rollback storms.
+ *
+ * TODO(high-scale): Insert read-through caches only around immutable or versioned
+ * transition lookups; never cache pending transition authority without a staleness
+ * boundary. Use distributed locks or compare-and-swap around shard drain/retire
+ * workflows that touch many open transitions.
  */
 export class ShardTransitionFSM {
   private readonly deps: {
@@ -54,6 +66,10 @@ export class ShardTransitionFSM {
    * - Creates transition record
    * - Escrows protected assets
    * - Does NOT finalize state
+   *
+   * Concurrency note: prepare is safe for optimistic idempotent retries by
+   * change_id, but production stores should protect the identity/assets being
+   * moved with a pessimistic escrow or equivalent authority lock.
    */
   async prepare(
     actor: string,
@@ -102,6 +118,10 @@ export class ShardTransitionFSM {
    * Commit a prepared transition.
    * - Confirms entry into target shard or authority
    * - Still reversible
+   *
+   * Failure mode: if the destination acknowledges arrival but the commit write
+   * times out, callers must retry with the same change_id instead of issuing a
+   * new transition.
    */
   async commit(
     actor: string,
@@ -145,6 +165,10 @@ export class ShardTransitionFSM {
    * - Releases escrow
    * - Makes destination authoritative
    * - Irreversible
+   *
+   * Idempotency boundary: confirmation idempotency covers the continuity state
+   * transition and escrow release. External reconciliation must provide its own
+   * idempotent change IDs.
    */
   async confirm(
     actor: string,
@@ -189,6 +213,10 @@ export class ShardTransitionFSM {
    * Roll back a prepared or committed transition.
    * - Restores assets
    * - Returns authority to source shard
+   *
+   * TODO(high-scale): Rollback storms should be batched by shard/region by an
+   * orchestration layer while preserving per-transition idempotency and audit
+   * ordering in this FSM.
    */
   async rollback(
     actor: string,
