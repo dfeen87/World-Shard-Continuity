@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 import { TransitionController } from "./base/transition_controller.js";
 import type { TransitionKind, TransitionRequest } from "./base/transition_types.js";
 import { ValidationError } from "../core/errors.js";

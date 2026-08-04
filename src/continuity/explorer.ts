@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { extname, relative, resolve } from "node:path";
 

@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 import { TransitionContext } from "./transition_context.js";
 import { TransitionRequest, TransitionOutcome } from "./transition_types.js";
 

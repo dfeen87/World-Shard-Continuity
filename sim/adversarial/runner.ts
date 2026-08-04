@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 export type Operation = {
   name: string;
   run: () => Promise<void>;

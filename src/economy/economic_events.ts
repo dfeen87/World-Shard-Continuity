@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 import { ValidationError } from "../core/errors.js";
 import type { EconomyLedger } from "./ledger.js";
 import type { AssetOwnershipRecord, EconomicEvent } from "./types.js";

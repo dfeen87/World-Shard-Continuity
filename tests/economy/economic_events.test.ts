@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 import assert from "node:assert/strict";
 import test from "node:test";
 import { applyEconomicEvents } from "../../src/economy/economic_events.js";

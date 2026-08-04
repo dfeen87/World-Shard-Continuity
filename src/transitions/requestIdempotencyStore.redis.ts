@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 import type { IdempotencyRecord, RequestIdempotencyStore } from "./requestIdempotencyStore.js";
 import { ConflictError, ValidationError } from "../core/errors.js";
 

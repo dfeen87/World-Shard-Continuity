@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 export type IdentityStatus = "active" | "suspended" | "banned" | "deleted";
 
 export interface PlayerIdentity {

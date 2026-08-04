@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 import { TransitionControllerRegistry } from "./TransitionControllerRegistry.js";
 import type { TransitionContext } from "./base/transition_context.js";
 import { InstanceGateController } from "./instance_gate/instance_gate_controller.js";

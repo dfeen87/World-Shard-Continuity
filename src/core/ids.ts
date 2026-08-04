@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 import { randomBytes } from "node:crypto";
 import { ValidationError } from "./errors.js";
 

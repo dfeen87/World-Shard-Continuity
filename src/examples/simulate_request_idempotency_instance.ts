@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 import { ConsoleAuditSink } from "../core/audit.js";
 import { newId } from "../core/ids.js";
 import { InMemoryIdentityStore } from "../identity/in_memory_store.js";

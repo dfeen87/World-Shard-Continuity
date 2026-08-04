@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, extname, resolve } from "node:path";
 import { defaultSchemaRegistry, type SchemaName } from "../core/validator.js";
