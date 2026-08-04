@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 import { randomUUID } from "node:crypto";
 import { ConflictError, NotFoundError } from "../errors.js";
 import { TransitionStore } from "./transition_store.js";

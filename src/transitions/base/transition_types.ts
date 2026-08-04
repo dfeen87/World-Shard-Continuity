@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 import type { EconomicEvent } from "../../economy/types.js";
 
 export type TransitionKind =

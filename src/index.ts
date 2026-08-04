@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 export * from "./core/errors.js";
 export * from "./core/ids.js";
 export * from "./core/audit.js";

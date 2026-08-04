@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 import { InMemoryTransitionStore } from "../../src/core/transition/in_memory_transition_store.js";
 import { TransitionStore } from "../../src/core/transition/transition_store.js";
 import { ShardTransitionFSM } from "../../src/core/transition/fsm.js";

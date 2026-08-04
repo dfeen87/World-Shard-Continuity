@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 import { ConflictError, NotFoundError } from "../core/errors.js";
 import { nowIso } from "../core/time.js";
 import { IdentityStore } from "./store.js";

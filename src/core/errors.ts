@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 export class WSCError extends Error {
   public readonly code: string;
   public readonly details: Record<string, unknown> | undefined;

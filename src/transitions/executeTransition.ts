@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 import type { TransitionControllerRegistry } from "./TransitionControllerRegistry.js";
 import type { TransitionRequest, TransitionOutcome, TransitionKind } from "./base/transition_types.js";
 import type { TransitionContext } from "./base/transition_context.js";

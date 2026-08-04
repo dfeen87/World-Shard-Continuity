@@ -1,3 +1,5 @@
+// Licensed under the PolyForm Noncommercial License 1.0.0
+
 export type AssetClass = "currency" | "item" | "vehicle" | "property" | "entitlement" | "reputation" | "other";
 export type AssetScope = "global" | "world_local" | "shard_local";
 
