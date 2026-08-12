@@ -1,6 +1,6 @@
 # World-Shard Continuity
 
-[![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/License-PolyForm%20Noncommercial%201.0.0-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/dfeen87/World-Shard-Continuity/actions/workflows/ci.yml/badge.svg)](https://github.com/dfeen87/World-Shard-Continuity/actions/workflows/ci.yml)
 
 A reference architecture and execution model for identity-safe, asset-safe, long-lived game worlds.
@@ -547,14 +547,14 @@ I would like to acknowledge **Microsoft Copilot**, **Anthropic Claude**, and **O
 
 ## License
 
-This repository is licensed under the **[PolyForm Noncommercial License 1.0.0](LICENSE)**.
+This repository is licensed under the **[MIT License](LICENSE)**.
 
-You may use, copy, modify, and distribute this project for non-commercial purposes under the terms of the license. Commercial use is not permitted unless you obtain a separate commercial license or written permission from the licensor.
+Copyright (c) Don Michael Feeney Jr.
 
 ---
 
 ## Enterprise Consulting & Integration
-This architecture is available under the PolyForm Noncommercial License 1.0.0. If your organization requires commercial use, custom scaling, proprietary integration, or dedicated technical consulting to deploy these models at an enterprise level, please reach out at: dfeen87@gmail.com
+This architecture is available under the MIT License. If your organization requires custom scaling, proprietary integration, or dedicated technical consulting to deploy these models at an enterprise level, please reach out at: dfeen87@gmail.com
 
 ## Final Note
 

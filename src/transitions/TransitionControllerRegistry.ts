@@ -1,4 +1,4 @@
-// Licensed under the PolyForm Noncommercial License 1.0.0
+// Copyright (c) Don Michael Feeney Jr. Licensed under the MIT License.
 
 import { TransitionController } from "./base/transition_controller.js";
 import type { TransitionKind, TransitionRequest } from "./base/transition_types.js";

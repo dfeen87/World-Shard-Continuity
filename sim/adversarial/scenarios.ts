@@ -1,4 +1,4 @@
-// Licensed under the PolyForm Noncommercial License 1.0.0
+// Copyright (c) Don Michael Feeney Jr. Licensed under the MIT License.
 
 import { InMemoryTransitionStore } from "../../src/core/transition/in_memory_transition_store.js";
 import { TransitionStore } from "../../src/core/transition/transition_store.js";
