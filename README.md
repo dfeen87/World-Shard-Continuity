@@ -503,7 +503,7 @@ Questions or proposals? Open an issue to discuss before implementing.
 
 ## Versioning Philosophy
 
-This repository is tagged **v3.2.1**.
+This repository is tagged **v4.0.0**.
 
 However, it intentionally includes:
 
