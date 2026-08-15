@@ -23,3 +23,10 @@ export * from "./core/transition/transition_store.js";
 export * from "./adapters/redis_transition_store.js";
 export * from "./world/shard_metadata.js";
 export * from "./world/world_expansion.js";
+
+export * from "./ontology/UnifiedEvent.js";
+export * from "./identity/CrossShardIdentityToken.js";
+export * from "./assets/ProceduralMeshTranslator.js";
+export * from "./gateway/InterShardGateway.js";
+export * from "./worldshards/hybrid/HybridWorldShard.js";
+export * from "./simulation/ShardOrchestrator.js";
