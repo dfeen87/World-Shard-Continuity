@@ -2,6 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/dfeen87/World-Shard-Continuity/actions/workflows/ci.yml/badge.svg)](https://github.com/dfeen87/World-Shard-Continuity/actions/workflows/ci.yml)
+![Version](https://img.shields.io/badge/version-4.1.0-blue.svg)
+![Node.js](https://img.shields.io/badge/Node.js-20%20(CI)-339933.svg)
 
 A reference architecture and execution model for identity-safe, asset-safe, long-lived game worlds.
 
@@ -13,15 +15,20 @@ This repository defines how players, assets, and economies move safely and deter
 
 ## Table of Contents
 
+- [At a Glance](#at-a-glance)
+- [What's New in 4.1.0](#whats-new-in-410)
 - [Why This Exists](#why-this-exists)
 - [What This Repo Provides](#what-this-repo-provides)
 - [What This Repo Intentionally Does NOT Include](#what-this-repo-intentionally-does-not-include)
+- [Why These Omissions Are Intentional](#why-these-omissions-are-intentional)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Getting Started (Fast Path)](#getting-started-fast-path)
+- [Command Reference](#command-reference)
 - [Continuity Validation](#continuity-validation)
 - [Continuity Search](#continuity-search)
 - [Relationship Graph Export](#relationship-graph-export)
+- [Hybrid World-Shard Continuity](#hybrid-world-shard-continuity)
 - [Project Structure](#project-structure)
 - [Related Contracts](#related-contracts)
 - [API Documentation](#api-documentation)
@@ -29,9 +36,35 @@ This repository defines how players, assets, and economies move safely and deter
 - [Contributing](#contributing)
 - [Continuous Integration](#continuous-integration)
 - [Versioning Philosophy](#versioning-philosophy)
+- [Troubleshooting](#troubleshooting)
 - [Acknowledgements](#acknowledgements)
 - [License](#license)
+- [Enterprise Consulting & Integration](#enterprise-consulting--integration)
 - [Final Note](#final-note)
+
+## At a Glance
+
+| Need | Start here | Executable proof |
+|---|---|---|
+| Design a safe world or shard handoff | [`contracts/world-transition.contract.md`](contracts/world-transition.contract.md) and [`reference-architectures/`](reference-architectures/) | `npm run sim:all` |
+| Preserve identity and ownership | [`contracts/identity-persistence.contract.md`](contracts/identity-persistence.contract.md) and [`contracts/economy-persistence.contract.md`](contracts/economy-persistence.contract.md) | `npm run test` |
+| Validate continuity records | [`schemas/`](schemas/) and [`docs/schema-usage-and-adaptation.md`](docs/schema-usage-and-adaptation.md) | `npm run validate -- --root examples/fixtures` |
+| Search or visualize fixture relationships | `src/continuity/` and `tools/viewer/` | `npm run search -- <query>` / `npm run graph -- --out continuity-graph.json` |
+| Reconcile events across simulation domains | `src/ontology/`, `src/gateway/`, and `src/worldshards/hybrid/` | Hybrid contract tests under `tests/hybrid/` |
+
+The Markdown contracts explain the guarantees, the TypeScript implementation makes the lifecycle concrete, and the tests and simulations demonstrate the invariants. New readers should follow [`docs/how-to-read-this-repo.md`](docs/how-to-read-this-repo.md) before adapting the patterns.
+
+## What's New in 4.1.0
+
+Version **4.1.0** makes the repository's hybrid continuity capabilities easier to discover and operate:
+
+- documents the unified LifeSim/ActionSim event model and deterministic replay surface;
+- highlights cross-shard identity migration, asset translation, gateway handoff, and shard orchestration;
+- aligns setup guidance with the Node.js 20 CI baseline;
+- adds a task-oriented capability map and a complete npm command reference;
+- clarifies the distinction between package version, independently versioned schemas, and world content versions.
+
+The 4.1.0 release is additive: the `1.0.0` fixture schema versions remain unchanged.
 
 ## Why This Exists
 
@@ -187,8 +220,8 @@ This repo is designed to age well.
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js** (v18 or higher recommended)
-- **npm** (v9 or higher)
+- **Node.js 20** (the CI baseline; the code targets ES2022)
+- **npm 9** or newer
 - A Unix-like environment (Linux, macOS, WSL on Windows)
 
 ## Installation
@@ -215,6 +248,23 @@ To run all CI checks locally:
 ```bash
 npm run ci
 ```
+
+## Command Reference
+
+All runtime commands consume compiled output, so run `npm run build` first (or use `npm run ci`, which builds automatically).
+
+| Command | Purpose |
+|---|---|
+| `npm run typecheck` | Type-check TypeScript without emitting files. |
+| `npm run build` | Remove `dist/` and compile source plus declarations. |
+| `npm run validate -- --root <path>` | Validate continuity JSON and cross-record references. |
+| `npm run search -- <query>` | Search indexed continuity entities. |
+| `npm run graph -- --out <file>` | Export the continuity relationship graph. |
+| `npm run fixtures:validate` | Validate the repository's example fixtures. |
+| `npm run sim:quick` | Run the request-idempotency simulations. |
+| `npm run sim:all` | Run instance, matchmaking, and idempotency simulations. |
+| `npm test` | Run the Node.js contract and unit tests. |
+| `npm run ci` | Run the complete local CI sequence. |
 
 ## Continuity Validation
 
@@ -367,6 +417,41 @@ Open `tools/viewer/index.html` in a browser and load an exported `continuity-gra
 - search/filter nodes
 - inspect connected edges for a selected node
 
+## Hybrid World-Shard Continuity
+
+The hybrid modules model continuity between `LifeSim` and `ActionSim` domains without coupling the core contracts to a game engine:
+
+- `UnifiedEvent` normalizes domain-specific events into a shared envelope.
+- `CrossShardIdentityToken` carries a stable actor identity and records migrations.
+- `ProceduralMeshTranslator` maps supported asset categories and applies explicit fallbacks for unknown categories.
+- `InterShardGateway` validates identity/source state, translates assets, hashes the target snapshot, and records the handoff.
+- `HybridWorldShard` maintains actor state and supports bounded, deterministic event replay with per-step hashes.
+- `ShardOrchestrator` advances registered shards on a shared logical clock.
+
+These modules are reference implementations. The gateway uses in-memory ledgers and process-local objects; production adopters must provide durable authority, authentication, transactional persistence, and transport appropriate to their environment.
+
+### Minimal Deterministic Replay
+
+```ts
+import { HybridWorldShard, translateLifeSimEvent } from "world-shard-continuity";
+
+const events = [
+  translateLifeSimEvent({
+    eventId: "evt-1",
+    actorId: "player-42",
+    interactionType: "entered_home",
+    timestamp: 1,
+    originShard: "life-1",
+    attributes: { mood: "focused" },
+  }),
+];
+
+const replay = HybridWorldShard.replay(events);
+console.log(replay.replayedCount, replay.finalStateHash);
+```
+
+For executable expectations, see the focused tests under [`tests/hybrid/`](tests/hybrid/).
+
 ## Project Structure
 
 ```
@@ -400,16 +485,20 @@ World-Shard-Continuity/
 │   └── world-shard.schema.json
 ├── src/                    # Core implementation
 │   ├── continuity/         # Validation, search indexing, graph building
-│   ├── core/               # Transition execution engine
-│   ├── transitions/        # Transition controllers and FSM
-│   ├── economy/            # Escrow and economic guarantees
-│   ├── identity/           # Identity persistence
+│   ├── core/               # Transition state machine and shared primitives
+│   ├── transitions/        # Controllers, routing, request idempotency
+│   ├── economy/            # Ledger, escrow, and economic events
+│   ├── identity/           # Identity persistence and cross-shard tokens
+│   ├── ontology/           # Cross-domain unified event model
+│   ├── gateway/            # Hybrid inter-shard handoff
+│   ├── worldshards/hybrid/ # Deterministic hybrid shard and replay
+│   ├── simulation/         # Shared-clock shard orchestration
 │   ├── cli/                # validate/search/graph commands
 │   ├── examples/           # runnable transition/idempotency demos
 │   └── adapters/           # Persistence adapters
 ├── sim/adversarial/        # Adversarial simulation scenarios
 ├── tools/viewer/           # Static graph viewer
-└── tests/                  # Contract tests
+└── tests/                  # Continuity, contract, economy, and hybrid tests
 
 ```
 
@@ -445,6 +534,7 @@ verification, and long-term evolution of continuity-safe systems.
 - **[Design Principles](docs/design-principles.md)** - Foundational architectural principles
 - **[Problem Space](docs/problem-space.md)** - Understanding continuity challenges
 - **[How to Read This Repo](docs/how-to-read-this-repo.md)** - Navigation guide
+- **[Versioning & Compatibility](docs/versioning-and-compatibility.md)** - Evolution and compatibility rules
 
 ### Continuity Layers
 
@@ -501,19 +591,15 @@ npm run sim:all    # Validate simulations
 
 Questions or proposals? Open an issue to discuss before implementing.
 
+## Continuous Integration
+
+GitHub Actions and `npm run ci` use the same verification sequence: type-check, clean build, fixture validation, all transition simulations, and the complete test suite. Run `npm ci` followed by `npm run ci` to reproduce that sequence from a locked dependency graph.
+
 ## Versioning Philosophy
 
-This repository is tagged **v4.0.0**.
+The repository package version is **4.1.0** and follows semantic versioning. Contract, fixture-schema, protocol, and world-content versions are separate compatibility boundaries; upgrading the package does not silently rewrite those versions.
 
-However, it intentionally includes:
-
-* v3.x-grade idempotency
-* production-level failure handling
-* extensibility hooks
-
-The surface area is frozen.  
-The guarantees are strong.  
-Future versions will extend — not rewrite.
+Minor releases are additive and preserve established continuity guarantees. Breaking changes to a normative contract require a major release. For the full policy, including reader/writer expectations and migration rules, see [`docs/versioning-and-compatibility.md`](docs/versioning-and-compatibility.md).
 
 ## Troubleshooting
 
@@ -528,7 +614,7 @@ npm run build
 
 **Simulations don't run**
 - Ensure you've run `npm run build` first
-- Check that Node.js version is 18 or higher: `node --version`
+- Check that Node.js version is 20 or higher: `node --version`
 
 **Tests fail unexpectedly**
 - Run `npm run clean && npm run build` to ensure fresh build

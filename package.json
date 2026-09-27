@@ -1,6 +1,6 @@
 {
   "name": "world-shard-continuity",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -16,7 +16,6 @@
     "clean": "rm -rf dist",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "npm run clean && tsc -p tsconfig.json",
-
     "validate": "node dist/cli/validate.js",
     "search": "node dist/cli/search.js",
     "graph": "node dist/cli/graph.js",
@@ -24,15 +23,12 @@
     "dev:search": "ts-node src/cli/search.ts",
     "dev:graph": "ts-node src/cli/graph.ts",
     "fixtures:validate": "node dist/examples/validate_fixtures.js",
-
     "sim:instance": "node dist/examples/simulate_instance_gate_transition.js",
     "sim:mm": "node dist/examples/simulate_matchmaking_transition.js",
-
     "sim:idemp:instance": "node dist/examples/simulate_request_idempotency_instance.js",
     "sim:idemp:mm": "node dist/examples/simulate_request_idempotency_matchmaking.js",
     "sim:idemp": "npm run sim:idemp:instance && npm run sim:idemp:mm",
     "sim:quick": "npm run sim:idemp",
-
     "sim:all": "npm run sim:instance && npm run sim:mm && npm run sim:idemp",
     "test": "node --test --loader ts-node/esm/transpile-only tests/**/*.test.ts",
     "ci": "npm run typecheck && npm run build && npm run fixtures:validate && npm run sim:all && npm run test"
