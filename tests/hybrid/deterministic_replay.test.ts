@@ -76,4 +76,7 @@ test("Deterministic replay produces identical state hash across multiple runs", 
   const partialReplay = HybridWorldShard.replay(events, { maxEvents: 2 });
   assert.equal(partialReplay.replayedCount, 2);
   assert.equal(partialReplay.stepHashes[1].stateHash, replayRun1.stepHashes[1].stateHash);
+
+  assert.throws(() => HybridWorldShard.replay(events, { maxEvents: -1 }), /non-negative integer/);
+  assert.throws(() => HybridWorldShard.replay(events, { maxEvents: 1.5 }), /non-negative integer/);
 });
