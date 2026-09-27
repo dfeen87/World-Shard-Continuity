@@ -38,6 +38,9 @@ export class HybridWorldShard {
   private actorStates: Map<string, HybridActorState> = new Map();
 
   constructor(shardId: string, initialLogicalTime: number = 0) {
+    if (!Number.isFinite(initialLogicalTime)) {
+      throw new Error("Initial logical time must be finite.");
+    }
     this.shardId = shardId;
     this.currentLogicalTime = initialLogicalTime;
   }
@@ -48,6 +51,9 @@ export class HybridWorldShard {
 
   public tick(logicalTimestamp?: number): void {
     if (typeof logicalTimestamp === "number") {
+      if (!Number.isFinite(logicalTimestamp)) {
+        throw new Error("Logical timestamp must be finite.");
+      }
       if (logicalTimestamp < this.currentLogicalTime) {
         throw new Error(`Cannot regress logical time: current ${this.currentLogicalTime}, received ${logicalTimestamp}`);
       }
@@ -120,6 +126,13 @@ export class HybridWorldShard {
       maxEvents?: number;
     }
   ): ReplayResult {
+    if (
+      options?.maxEvents !== undefined &&
+      (!Number.isInteger(options.maxEvents) || options.maxEvents < 0)
+    ) {
+      throw new Error("maxEvents must be a non-negative integer.");
+    }
+
     // Isolated state copy
     const workingStates = new Map<string, HybridActorState>();
     if (options?.initialStates) {

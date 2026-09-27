@@ -28,3 +28,20 @@ test("ShardOrchestrator schedules hybrid shards with coherent time sync", () => 
   assert.equal(shard1.getLogicalTime(), 25);
   assert.equal(shard2.getLogicalTime(), 25);
 });
+
+test("ShardOrchestrator rejects non-finite time values", () => {
+  assert.throws(() => new ShardOrchestrator(Number.NaN), /finite/);
+
+  const orchestrator = new ShardOrchestrator();
+  assert.throws(() => orchestrator.tick(Number.NaN), /positive finite/);
+  assert.throws(() => orchestrator.stepToTime(Number.POSITIVE_INFINITY), /finite/);
+  assert.equal(orchestrator.getGlobalLogicalTime(), 0);
+});
+
+test("HybridWorldShard rejects non-finite time values", () => {
+  assert.throws(() => new HybridWorldShard("shard_invalid", Number.NaN), /finite/);
+
+  const shard = new HybridWorldShard("shard_valid");
+  assert.throws(() => shard.tick(Number.POSITIVE_INFINITY), /finite/);
+  assert.equal(shard.getLogicalTime(), 0);
+});

@@ -14,6 +14,9 @@ export class ShardOrchestrator {
   private hybridShards: Map<string, HybridWorldShard> = new Map();
 
   constructor(initialGlobalTime: number = 0) {
+    if (!Number.isFinite(initialGlobalTime)) {
+      throw new Error("Initial global time must be finite.");
+    }
     this.globalLogicalTime = initialGlobalTime;
   }
 
@@ -66,8 +69,8 @@ export class ShardOrchestrator {
    * Advances simulation time coherently across all registered shards.
    */
   public tick(deltaSteps: number = 1): number {
-    if (deltaSteps <= 0) {
-      throw new Error("Tick delta must be a positive number.");
+    if (!Number.isFinite(deltaSteps) || deltaSteps <= 0) {
+      throw new Error("Tick delta must be a positive finite number.");
     }
 
     this.globalLogicalTime += deltaSteps;
@@ -83,6 +86,9 @@ export class ShardOrchestrator {
    * Synchronizes all registered shards to a specific target logical timestamp.
    */
   public stepToTime(targetTime: number): void {
+    if (!Number.isFinite(targetTime)) {
+      throw new Error("Target time must be finite.");
+    }
     if (targetTime < this.globalLogicalTime) {
       throw new Error(`Target time (${targetTime}) cannot be earlier than global logical time (${this.globalLogicalTime}).`);
     }
